@@ -1,5 +1,10 @@
 import { fetchApiJson } from '@/api/http.ts';
-import type { PostResponse, PostUpdateRequest } from '@/types/post.ts';
+import type {
+  PostDetailResponse,
+  PostImageResponse,
+  PostResponse,
+  PostUpdateRequest,
+} from '@/types/post.ts';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -29,9 +34,40 @@ export async function fetchPostList(signal?: AbortSignal): Promise<PostResponse[
   return data;
 }
 
-export async function fetchPost(id: number, signal?: AbortSignal): Promise<PostResponse> {
+function isPostImage(value: unknown): value is PostImageResponse {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.id === 'number' &&
+    typeof value.imageUrl === 'string' &&
+    typeof value.imageOrder === 'number'
+  );
+}
+
+function isPostDetailResponse(value: unknown): value is PostDetailResponse {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.id === 'number' &&
+    typeof value.memberId === 'number' &&
+    typeof value.content === 'string' &&
+    (value.fileUrl === null || typeof value.fileUrl === 'string') &&
+    typeof value.likeCount === 'number' &&
+    typeof value.subscriberOnly === 'boolean' &&
+    typeof value.createdAt === 'string' &&
+    typeof value.updatedAt === 'string' &&
+    Array.isArray(value.images) &&
+    value.images.every(isPostImage)
+  );
+}
+
+export async function fetchPost(id: number, signal?: AbortSignal): Promise<PostDetailResponse> {
   const data = await fetchApiJson(`/api/v1/posts/${id}`, { signal });
-  if (!isPostResponse(data)) {
+  if (!isPostDetailResponse(data)) {
     throw new Error('게시글 형식이 올바르지 않습니다.');
   }
   return data;
