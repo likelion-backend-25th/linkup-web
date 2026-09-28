@@ -1,8 +1,7 @@
-import { useEffect, useRef } from 'react';
-import {
-  SubscriptionCard,
-  type SubscriptionDisplayStatus,
-} from '@/components/SubscriptionCard.tsx';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { SubscriptionCard } from '@/components/SubscriptionCard.tsx';
+import { SubscriptionDetailDialog } from '@/components/SubscriptionDetailDialog.tsx';
+import type { SubscriptionDisplayStatus } from '@/components/SubscriptionStatusBadge.tsx';
 import { useSubscriptions } from '@/hooks/useSubscriptions.ts';
 import { useAuthStore } from '@/stores/useAuthStore.ts';
 import type { SubscribeCreatorListResponse } from '@/types/subscription.ts';
@@ -10,12 +9,12 @@ import type { SubscribeCreatorListResponse } from '@/types/subscription.ts';
 // TODO: 로그인 API 완성 후 제거하고 비로그인 시 /login 으로 리다이렉트한다.
 const FALLBACK_MEMBER_ID = 1;
 
-// 해지(CANCELLED)여도 종료일 전까지는 혜택이 유지되므로 '종료 예정'으로 구분한다.
+// 목록 응답엔 종료일이 없어, 해지(CANCELLED)는 '종료 예정'으로 표시한다. 정확한 만료일은 상세 팝업에서 확인.
 function toDisplayStatus(item: SubscribeCreatorListResponse): SubscriptionDisplayStatus {
   if (item.status === 'ACTIVE') {
     return 'active';
   }
-  if (item.endDate !== null && new Date(item.endDate).getTime() > Date.now()) {
+  if (item.status === 'CANCELLED') {
     return 'ending';
   }
   return 'ended';
@@ -30,6 +29,8 @@ export function SubscriptionsPage() {
   );
   const scrollRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const [detailId, setDetailId] = useState<number | null>(null);
+  const closeDetail = useCallback(() => setDetailId(null), []);
 
   // 하단 sentinel 이 보이면 다음 페이지를 요청한다. 에러 시 자동 재시도하지 않는다.
   useEffect(() => {
@@ -54,23 +55,16 @@ export function SubscriptionsPage() {
 
   const items = subscriptions.map((item) => ({ item, status: toDisplayStatus(item) }));
   const activeCount = items.filter(({ status }) => status === 'active').length;
-  const endingCount = items.filter(({ status }) => status === 'ending').length;
   const countSuffix = hasNext ? '+' : '';
 
   return (
     <section className="flex h-full min-h-0 flex-col rounded-2xl bg-white px-5 py-4 shadow-sm">
       <header className="shrink-0 border-b border-zinc-100 pb-4">
-        <h1 className="text-lg font-bold text-zinc-900">내가 구독한 크리에이터</h1>
+        <h1 className="text-lg font-bold text-zinc-900">내가 구독한 사람</h1>
         <p className="mt-1 text-sm text-zinc-500">
           구독 중{' '}
           <span className="font-semibold text-linkup">
             {activeCount}
-            {countSuffix}
-          </span>
-          <span className="mx-2 text-zinc-300">·</span>
-          종료 예정{' '}
-          <span className="font-semibold text-zinc-700">
-            {endingCount}
             {countSuffix}
           </span>
         </p>
@@ -87,7 +81,11 @@ export function SubscriptionsPage() {
           <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
             {items.map(({ item, status }) => (
               <li key={item.subscriptionId}>
-                <SubscriptionCard subscription={item} displayStatus={status} />
+                <SubscriptionCard
+                  subscription={item}
+                  displayStatus={status}
+                  onOpenDetail={setDetailId}
+                />
               </li>
             ))}
           </ul>
@@ -110,6 +108,16 @@ export function SubscriptionsPage() {
           </div>
         )}
       </div>
+
+      {detailId !== null && (
+        <SubscriptionDetailDialog
+          key={detailId}
+          subscriptionId={detailId}
+          memberId={memberId}
+          accessToken={accessToken}
+          onClose={closeDetail}
+        />
+      )}
     </section>
   );
 }

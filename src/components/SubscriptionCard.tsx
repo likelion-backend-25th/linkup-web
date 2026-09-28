@@ -1,48 +1,27 @@
 import { Link } from 'react-router';
+import {
+  SubscriptionStatusBadge,
+  type SubscriptionDisplayStatus,
+} from '@/components/SubscriptionStatusBadge.tsx';
 import type { SubscribeCreatorListResponse } from '@/types/subscription.ts';
-
-export type SubscriptionDisplayStatus = 'active' | 'ending' | 'ended';
 
 interface SubscriptionCardProps {
   subscription: SubscribeCreatorListResponse;
   displayStatus: SubscriptionDisplayStatus;
+  onOpenDetail: (subscriptionId: number) => void;
 }
 
-const statusLabel: Record<SubscriptionDisplayStatus, string> = {
-  active: '구독 중',
-  ending: '종료 예정',
-  ended: '종료',
-};
-
-const statusClassName: Record<SubscriptionDisplayStatus, string> = {
-  active: 'bg-linkup text-white',
-  ending: 'bg-amber-100 text-amber-700',
-  ended: 'bg-zinc-100 text-zinc-500',
-};
-
-function formatDate(value: string | null): string {
-  if (value === null) {
-    return '-';
-  }
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-  return new Intl.DateTimeFormat('ko-KR', { dateStyle: 'long' }).format(date);
-}
-
-export function SubscriptionCard({ subscription, displayStatus }: SubscriptionCardProps) {
+export function SubscriptionCard({
+  subscription,
+  displayStatus,
+  onOpenDetail,
+}: SubscriptionCardProps) {
   const profilePath = `/profile/${subscription.creatorId}`;
-  const isActive = displayStatus === 'active';
 
   return (
     <article className="flex flex-col overflow-hidden rounded-2xl border border-zinc-100 bg-white">
       <div className="relative h-24 bg-linkup-soft">
-        <span
-          className={`absolute right-3 top-3 rounded-full px-2.5 py-1 text-xs font-medium ${statusClassName[displayStatus]}`}
-        >
-          {statusLabel[displayStatus]}
-        </span>
+        <SubscriptionStatusBadge status={displayStatus} className="absolute right-3 top-3" />
         <Link to={profilePath} className="absolute -bottom-7 left-5">
           {subscription.profileImage ? (
             <img
@@ -67,25 +46,15 @@ export function SubscriptionCard({ subscription, displayStatus }: SubscriptionCa
           {subscription.introduction ?? '소개가 없습니다.'}
         </p>
 
-        <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-          <dt className="text-zinc-400">구독 시작</dt>
-          <dd className="text-zinc-700">{formatDate(subscription.startDate)}</dd>
-          <dt className="text-zinc-400">{isActive ? '다음 결제일' : '종료일'}</dt>
-          <dd className="text-zinc-700">
-            {formatDate(isActive ? subscription.nextBillingAt : subscription.endDate)}
-          </dd>
-        </dl>
-
-        {/* 결제 내역 / 구독 해지 API 가 아직 없어 비활성화 */}
         <div className="mt-4 grid grid-cols-2 gap-2">
           <button
             type="button"
-            disabled
-            title="준비 중인 기능"
-            className="rounded-xl border border-zinc-200 py-2 text-xs font-medium text-zinc-600 disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => onOpenDetail(subscription.subscriptionId)}
+            className="rounded-xl border border-zinc-200 py-2 text-xs font-medium text-zinc-600 hover:bg-zinc-50"
           >
-            결제 내역
+            상세 내역
           </button>
+          {/* 구독 해지 API 가 아직 없어 비활성화 */}
           <button
             type="button"
             disabled

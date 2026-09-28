@@ -2,6 +2,7 @@ import { fetchApiJson } from '@/api/http.ts';
 import type {
   PagingSubListResponse,
   SubscribeCreatorListResponse,
+  SubscriptionDetailResponse,
 } from '@/types/subscription.ts';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -25,10 +26,7 @@ function isSubscribeCreator(value: unknown): value is SubscribeCreatorListRespon
     typeof value.creatorUniqueId === 'string' &&
     isNullableString(value.profileImage) &&
     isNullableString(value.introduction) &&
-    typeof value.status === 'string' &&
-    typeof value.startDate === 'string' &&
-    isNullableString(value.endDate) &&
-    isNullableString(value.nextBillingAt)
+    typeof value.status === 'string'
   );
 }
 
@@ -44,6 +42,24 @@ function isPagingSubListResponse(value: unknown): value is PagingSubListResponse
       value.nextCursor === undefined ||
       typeof value.nextCursor === 'number') &&
     typeof value.hasNext === 'boolean'
+  );
+}
+
+function isSubscriptionDetail(value: unknown): value is SubscriptionDetailResponse {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.subscriptionId === 'number' &&
+    typeof value.name === 'string' &&
+    typeof value.uniqueId === 'string' &&
+    typeof value.email === 'string' &&
+    typeof value.price === 'number' &&
+    typeof value.status === 'string' &&
+    typeof value.startDate === 'string' &&
+    isNullableString(value.endDate) &&
+    isNullableString(value.nextBillingAt)
   );
 }
 
@@ -74,10 +90,29 @@ export async function fetchSubscriptions(
       ...item,
       profileImage: item.profileImage ?? null,
       introduction: item.introduction ?? null,
-      endDate: item.endDate ?? null,
-      nextBillingAt: item.nextBillingAt ?? null,
     })),
     nextCursor: data.nextCursor ?? null,
     hasNext: data.hasNext,
+  };
+}
+
+export async function fetchSubscriptionDetail(
+  subscriptionId: number,
+  memberId: number,
+  accessToken: string | null,
+  signal?: AbortSignal,
+): Promise<SubscriptionDetailResponse> {
+  const data = await fetchApiJson(`/api/v1/subscriptions/${subscriptionId}`, {
+    accessToken,
+    headers: { 'X-Member-Id': String(memberId) },
+    signal,
+  });
+  if (!isSubscriptionDetail(data)) {
+    throw new Error('구독 상세 형식이 올바르지 않습니다.');
+  }
+  return {
+    ...data,
+    endDate: data.endDate ?? null,
+    nextBillingAt: data.nextBillingAt ?? null,
   };
 }

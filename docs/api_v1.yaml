@@ -194,6 +194,8 @@
         "tags": [
           "post-controller"
         ],
+        "summary": "게시글 등록",
+        "description": "게시글을 등록하고 게시글 ID를 응답합니다.",
         "operationId": "createPost",
         "requestBody": {
           "content": {
@@ -226,7 +228,7 @@
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "게시글 등록 성공",
             "content": {
               "application/json": {
                 "schema": {
@@ -234,6 +236,15 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "이미지/첨부파일 검증 실패"
+          },
+          "404": {
+            "description": "회원이 존재하지 않음"
+          },
+          "403": {
+            "description": "구독자 전용 게시글 작성 권한 없음"
           }
         }
       }
@@ -708,6 +719,52 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PagingSubListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/subscriptions/{id}": {
+      "get": {
+        "tags": [
+          "subscription-controller"
+        ],
+        "summary": "구독 내역 상세 조회",
+        "description": "구독 id 값을 사용하여 구독 내역을 상세 조회 한다",
+        "operationId": "getSubscriptionDetail",
+        "parameters": [
+          {
+            "name": "X-Member-Id",
+            "in": "header",
+            "description": "로그인 회원 ID",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "구독 내역 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "구독 상세 내역 조회 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionDetailResponse"
                 }
               }
             }
@@ -1207,6 +1264,31 @@
           },
           "introduction": {
             "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "SubscriptionDetailResponse": {
+        "type": "object",
+        "properties": {
+          "subscriptionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "uniqueId": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "price": {
+            "type": "integer",
+            "format": "int32"
           },
           "status": {
             "type": "string"
