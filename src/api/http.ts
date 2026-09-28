@@ -30,6 +30,7 @@ export interface FetchApiOptions {
   method?: string;
   body?: unknown;
   accessToken?: string | null;
+  headers?: Record<string, string>;
   signal?: AbortSignal;
 }
 
@@ -42,7 +43,7 @@ export async function fetchApiJson(
   url: string,
   options: FetchApiOptions = {},
 ): Promise<unknown> {
-  const headers = new Headers();
+  const headers = new Headers(options.headers);
   if (options.body !== undefined) {
     headers.set('Content-Type', 'application/json');
   }

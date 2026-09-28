@@ -4,6 +4,7 @@ import { FeedPage } from '@/pages/FeedPage.tsx';
 import { LoginPage } from '@/pages/LoginPage.tsx';
 import { PlaceholderPage } from '@/pages/PlaceholderPage.tsx';
 import { PostDetailPage } from '@/pages/PostDetailPage.tsx';
+import { SubscriptionsPage } from '@/pages/SubscriptionsPage.tsx';
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
           <Route path="/posts/new" element={<PlaceholderPage title="글쓰기" />} />
           <Route path="/posts/:id" element={<PostDetailPage />} />
           <Route path="/search" element={<PlaceholderPage title="검색" />} />
+          <Route path="/subscriptions" element={<SubscriptionsPage />} />
           <Route path="/notifications" element={<PlaceholderPage title="알림" />} />
           <Route path="/profile" element={<PlaceholderPage title="내프로필" />} />
           <Route path="/admin" element={<PlaceholderPage title="관리자페이지" />} />
