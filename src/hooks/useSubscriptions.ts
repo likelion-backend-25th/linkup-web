@@ -7,6 +7,7 @@ const PAGE_SIZE = 9;
 
 export function useSubscriptions(memberId: number, accessToken: string | null) {
   const [subscriptions, setSubscriptions] = useState<SubscribeCreatorListResponse[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [hasNext, setHasNext] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +38,7 @@ export function useSubscriptions(memberId: number, accessToken: string | null) {
         setSubscriptions((current) =>
           isFirstPage ? page.subCreatorList : [...current, ...page.subCreatorList],
         );
+        setTotalCount(page.subCreatorCount);
         cursorRef.current = page.nextCursor;
         // nextCursor 가 없으면 더 요청할 수 없으므로 종료로 본다.
         hasNextRef.current = page.hasNext && page.nextCursor !== null;
@@ -64,5 +66,5 @@ export function useSubscriptions(memberId: number, accessToken: string | null) {
     return () => controller.abort();
   }, [loadMore]);
 
-  return { subscriptions, hasNext, loading, error, loadMore };
+  return { subscriptions, totalCount, hasNext, loading, error, loadMore };
 }

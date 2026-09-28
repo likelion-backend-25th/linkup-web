@@ -38,6 +38,7 @@ function isPagingSubListResponse(value: unknown): value is PagingSubListResponse
   return (
     Array.isArray(value.subCreatorList) &&
     value.subCreatorList.every(isSubscribeCreator) &&
+    typeof value.subCreatorCount === 'number' &&
     (value.nextCursor === null ||
       value.nextCursor === undefined ||
       typeof value.nextCursor === 'number') &&
@@ -91,6 +92,7 @@ export async function fetchSubscriptions(
       profileImage: item.profileImage ?? null,
       introduction: item.introduction ?? null,
     })),
+    subCreatorCount: data.subCreatorCount,
     nextCursor: data.nextCursor ?? null,
     hasNext: data.hasNext,
   };
