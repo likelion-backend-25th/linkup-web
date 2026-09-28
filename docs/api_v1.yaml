@@ -1,0 +1,1623 @@
+{
+openapi: "3.1.0",
+info: {
+title: "OpenAPI definition",
+version: "v0"
+},
+servers: [
+{
+url: "http://localhost:8080",
+description: "Generated server url"
+}
+],
+paths: {
+/api/v1/posts/{postId}: {
+get: {
+tags: [
+"post-controller"
+],
+operationId: "getPostDetail",
+parameters: [
+{
+name: "postId",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int64"
+}
+}
+],
+responses: {
+200: {
+description: "OK",
+content: {
+application/json: {
+schema: {
+$ref: "#/components/schemas/PostDetailResponse"
+}
+}
+}
+}
+}
+},
+put: {
+tags: [
+"post-controller"
+],
+operationId: "updatePost",
+parameters: [
+{
+name: "postId",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int64"
+}
+}
+],
+requestBody: {
+content: {
+application/json: {
+schema: {
+type: "object",
+properties: {
+request: {
+$ref: "#/components/schemas/PostUpdateRequest"
+},
+file: {
+type: "string",
+format: "binary"
+}
+},
+required: [
+"request"
+]
+}
+}
+}
+},
+responses: {
+200: {
+description: "OK"
+}
+}
+},
+delete: {
+tags: [
+"post-controller"
+],
+operationId: "deletePost",
+parameters: [
+{
+name: "postId",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int64"
+}
+}
+],
+responses: {
+200: {
+description: "OK"
+}
+}
+}
+},
+/api/v1/posts/{postId}/replies/{replyId}: {
+put: {
+tags: [
+"reply-controller"
+],
+operationId: "updateReply",
+parameters: [
+{
+name: "postId",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int64"
+}
+},
+{
+name: "replyId",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int64"
+}
+}
+],
+requestBody: {
+content: {
+application/json: {
+schema: {
+$ref: "#/components/schemas/ReplyUpdateRequest"
+}
+}
+},
+required: true
+},
+responses: {
+200: {
+description: "OK"
+}
+}
+},
+delete: {
+tags: [
+"reply-controller"
+],
+operationId: "deleteReply",
+parameters: [
+{
+name: "postId",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int64"
+}
+},
+{
+name: "replyId",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int64"
+}
+}
+],
+responses: {
+200: {
+description: "OK"
+}
+}
+}
+},
+/api/v1/posts: {
+post: {
+tags: [
+"post-controller"
+],
+operationId: "createPost",
+requestBody: {
+content: {
+application/json: {
+schema: {
+type: "object",
+properties: {
+request: {
+$ref: "#/components/schemas/PostCreateRequest"
+},
+images: {
+type: "array",
+items: {
+type: "string",
+format: "binary"
+}
+},
+file: {
+type: "string",
+format: "binary"
+}
+},
+required: [
+"images",
+"request"
+]
+}
+}
+}
+},
+responses: {
+200: {
+description: "OK",
+content: {
+application/json: {
+schema: {
+$ref: "#/components/schemas/PostCreateResponse"
+}
+}
+}
+}
+}
+}
+},
+/api/v1/posts/{postId}/reports: {
+post: {
+tags: [
+"report-controller"
+],
+operationId: "createPostReport",
+parameters: [
+{
+name: "postId",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int64"
+}
+}
+],
+requestBody: {
+content: {
+application/json: {
+schema: {
+$ref: "#/components/schemas/ReportCreateRequest"
+}
+}
+},
+required: true
+},
+responses: {
+200: {
+description: "OK"
+}
+}
+}
+},
+/api/v1/posts/{postId}/replies: {
+get: {
+tags: [
+"reply-controller"
+],
+operationId: "getReplies",
+parameters: [
+{
+name: "postId",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int64"
+}
+},
+{
+name: "cursor",
+in: "query",
+required: false,
+schema: {
+type: "integer",
+format: "int64"
+}
+},
+{
+name: "size",
+in: "query",
+required: false,
+schema: {
+type: "integer",
+format: "int32",
+default: 10,
+maximum: 20,
+minimum: 1
+}
+}
+],
+responses: {
+200: {
+description: "OK",
+content: {
+application/json: {
+schema: {
+$ref: "#/components/schemas/ReplyPageResponse"
+}
+}
+}
+}
+}
+},
+post: {
+tags: [
+"reply-controller"
+],
+operationId: "createReply",
+parameters: [
+{
+name: "postId",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int64"
+}
+}
+],
+requestBody: {
+content: {
+application/json: {
+schema: {
+$ref: "#/components/schemas/ReplyCreateRequest"
+}
+}
+},
+required: true
+},
+responses: {
+200: {
+description: "OK",
+content: {
+application/json: {
+schema: {
+type: "integer",
+format: "int64"
+}
+}
+}
+}
+}
+}
+},
+/api/v1/posts/{postId}/replies/{replyId}/reports: {
+post: {
+tags: [
+"report-controller"
+],
+operationId: "createReplyReport",
+parameters: [
+{
+name: "postId",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int64"
+}
+},
+{
+name: "replyId",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int64"
+}
+}
+],
+requestBody: {
+content: {
+application/json: {
+schema: {
+$ref: "#/components/schemas/ReportCreateRequest"
+}
+}
+},
+required: true
+},
+responses: {
+200: {
+description: "OK"
+}
+}
+}
+},
+/api/v1/posts/{postId}/replies/{replyId}/likes: {
+post: {
+tags: [
+"reply-like-controller"
+],
+operationId: "insertReplyLike",
+parameters: [
+{
+name: "postId",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int64"
+}
+},
+{
+name: "replyId",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int64"
+}
+}
+],
+responses: {
+200: {
+description: "OK"
+}
+}
+},
+delete: {
+tags: [
+"reply-like-controller"
+],
+operationId: "deleteReplyLike",
+parameters: [
+{
+name: "postId",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int64"
+}
+},
+{
+name: "replyId",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int64"
+}
+}
+],
+responses: {
+200: {
+description: "OK"
+}
+}
+}
+},
+/api/v1/posts/{postId}/likes: {
+post: {
+tags: [
+"post-like-controller"
+],
+operationId: "insertPostLike",
+parameters: [
+{
+name: "postId",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int64"
+}
+}
+],
+responses: {
+200: {
+description: "OK"
+}
+}
+},
+delete: {
+tags: [
+"post-like-controller"
+],
+operationId: "deletePostLike",
+parameters: [
+{
+name: "postId",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int64"
+}
+}
+],
+responses: {
+200: {
+description: "OK"
+}
+}
+}
+},
+/api/v1/members/{targetId}/follow: {
+get: {
+tags: [
+"follow-controller"
+],
+operationId: "getFollowStatus",
+parameters: [
+{
+name: "targetId",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int64"
+}
+}
+],
+responses: {
+200: {
+description: "OK",
+content: {
+application/json: {
+schema: {
+$ref: "#/components/schemas/FollowResponse"
+}
+}
+}
+}
+}
+},
+post: {
+tags: [
+"follow-controller"
+],
+operationId: "addFollow",
+parameters: [
+{
+name: "targetId",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int64"
+}
+}
+],
+responses: {
+200: {
+description: "OK"
+}
+}
+},
+delete: {
+tags: [
+"follow-controller"
+],
+operationId: "deleteFollow",
+parameters: [
+{
+name: "targetId",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int64"
+}
+}
+],
+responses: {
+200: {
+description: "OK"
+}
+}
+}
+},
+/api/v1/admin/reports/{reportId}: {
+get: {
+tags: [
+"admin-reporter-controller"
+],
+operationId: "getReportDetail",
+parameters: [
+{
+name: "reportId",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int64"
+}
+}
+],
+responses: {
+200: {
+description: "OK",
+content: {
+application/json: {
+schema: {
+$ref: "#/components/schemas/AdminReportDetailResponse"
+}
+}
+}
+}
+}
+},
+patch: {
+tags: [
+"admin-reporter-controller"
+],
+operationId: "processReport",
+parameters: [
+{
+name: "reportId",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int64"
+}
+}
+],
+requestBody: {
+content: {
+application/json: {
+schema: {
+$ref: "#/components/schemas/AdminReportProcessRequest"
+}
+}
+},
+required: true
+},
+responses: {
+200: {
+description: "OK"
+}
+}
+}
+},
+/api/v1/subscriptions: {
+get: {
+tags: [
+"subscription-controller"
+],
+summary: "사용자의 구독 리스트 조회",
+description: "사용자의 Auth 정보에서 ID값을 가져와 구독 리스트를 조회하여 반환한다",
+operationId: "getSubscribeCreatorList",
+parameters: [
+{
+name: "X-Member-Id",
+in: "header",
+description: "로그인 회원 ID",
+required: true,
+schema: {
+type: "integer",
+format: "int64"
+},
+example: 1
+}
+],
+responses: {
+200: {
+description: "구독 리스트 조회 성공",
+content: {
+application/json: {
+schema: {
+type: "array",
+items: {
+$ref: "#/components/schemas/SubscribeCreatorListResponse"
+}
+}
+}
+}
+}
+}
+}
+},
+/api/v1/feeds/subscription: {
+get: {
+tags: [
+"feed-controller"
+],
+operationId: "getSubscriptionFeed",
+parameters: [
+{
+name: "cursor",
+in: "query",
+required: false,
+schema: {
+type: "integer",
+format: "int64"
+}
+},
+{
+name: "size",
+in: "query",
+required: false,
+schema: {
+type: "integer",
+format: "int32",
+default: 10,
+maximum: 20,
+minimum: 3
+}
+}
+],
+responses: {
+200: {
+description: "OK",
+content: {
+application/json: {
+schema: {
+$ref: "#/components/schemas/FeedResponse"
+}
+}
+}
+}
+}
+}
+},
+/api/v1/feeds/following: {
+get: {
+tags: [
+"feed-controller"
+],
+operationId: "getFollowingFeed",
+parameters: [
+{
+name: "cursor",
+in: "query",
+required: false,
+schema: {
+type: "integer",
+format: "int64"
+}
+},
+{
+name: "size",
+in: "query",
+required: false,
+schema: {
+type: "integer",
+format: "int32",
+default: 10,
+maximum: 20,
+minimum: 3
+}
+}
+],
+responses: {
+200: {
+description: "OK",
+content: {
+application/json: {
+schema: {
+$ref: "#/components/schemas/FeedResponse"
+}
+}
+}
+}
+}
+}
+},
+/api/v1/admin/reports: {
+get: {
+tags: [
+"admin-reporter-controller"
+],
+operationId: "getReports",
+parameters: [
+{
+name: "request",
+in: "query",
+required: true,
+schema: {
+$ref: "#/components/schemas/AdminReportSearchRequest"
+}
+}
+],
+responses: {
+200: {
+description: "OK",
+content: {
+application/json: {
+schema: {
+type: "array",
+items: {
+$ref: "#/components/schemas/AdminReportResponse"
+}
+}
+}
+}
+}
+}
+}
+},
+/api/v1/admin/reports/operation: {
+get: {
+tags: [
+"admin-reporter-controller"
+],
+operationId: "getOperation",
+responses: {
+200: {
+description: "OK",
+content: {
+application/json: {
+schema: {
+$ref: "#/components/schemas/AdminOperationResponse"
+}
+}
+}
+}
+}
+}
+},
+/api/v1/admin/payment: {
+get: {
+tags: [
+"admin-payment-controller"
+],
+operationId: "findPayments",
+parameters: [
+{
+name: "request",
+in: "query",
+required: true,
+schema: {
+$ref: "#/components/schemas/AdminPaymentSearchRequest"
+}
+}
+],
+responses: {
+200: {
+description: "OK",
+content: {
+application/json: {
+schema: {
+type: "array",
+items: {
+$ref: "#/components/schemas/AdminPaymentResponse"
+}
+}
+}
+}
+}
+}
+}
+},
+/api/v1/admin/payment/{paymentId}: {
+get: {
+tags: [
+"admin-payment-controller"
+],
+operationId: "findPaymentDetail",
+parameters: [
+{
+name: "paymentId",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int64"
+}
+}
+],
+responses: {
+200: {
+description: "OK",
+content: {
+application/json: {
+schema: {
+$ref: "#/components/schemas/AdminPaymentDetailResponse"
+}
+}
+}
+}
+}
+}
+},
+/api/v1/admin/members: {
+get: {
+tags: [
+"admin-member-controller"
+],
+operationId: "findMembers",
+parameters: [
+{
+name: "condition",
+in: "query",
+required: true,
+schema: {
+$ref: "#/components/schemas/AdminMemberSearchRequest"
+}
+}
+],
+responses: {
+200: {
+description: "OK",
+content: {
+application/json: {
+schema: {
+type: "array",
+items: {
+$ref: "#/components/schemas/AdminMemberResponse"
+}
+}
+}
+}
+}
+}
+}
+},
+/api/v1/admin/members/{memberId}: {
+get: {
+tags: [
+"admin-member-controller"
+],
+operationId: "findMemberDetail",
+parameters: [
+{
+name: "memberId",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int64"
+}
+}
+],
+responses: {
+200: {
+description: "OK",
+content: {
+application/json: {
+schema: {
+$ref: "#/components/schemas/AdminMemberDetailResponse"
+}
+}
+}
+}
+}
+}
+}
+},
+components: {
+schemas: {
+PostUpdateRequest: {
+type: "object",
+properties: {
+content: {
+type: "string",
+description: "게시글 본문 내용",
+maxLength: 2000,
+minLength: 0
+},
+subscriberOnly: {
+type: "boolean",
+description: "구독자 전용 게시글 여부"
+},
+removeFile: {
+type: "boolean",
+description: "파일 삭제 여부"
+}
+},
+required: [
+"content",
+"subscriberOnly"
+]
+},
+ReplyUpdateRequest: {
+type: "object",
+properties: {
+content: {
+type: "string",
+description: "댓글 본문",
+maxLength: 500,
+minLength: 0
+}
+},
+required: [
+"content"
+]
+},
+PostCreateRequest: {
+type: "object",
+properties: {
+content: {
+type: "string",
+description: "게시글 본문 내용",
+maxLength: 2000,
+minLength: 0
+},
+subscriberOnly: {
+type: "boolean",
+description: "구독자 전용 게시글 여부"
+}
+},
+required: [
+"content",
+"subscriberOnly"
+]
+},
+PostCreateResponse: {
+type: "object",
+properties: {
+id: {
+type: "integer",
+format: "int64",
+description: "게시글 고유 식별자"
+}
+}
+},
+ReportCreateRequest: {
+type: "object",
+properties: {
+reason: {
+type: "string",
+maxLength: 100,
+minLength: 0
+},
+content: {
+type: "string",
+maxLength: 1000,
+minLength: 0
+}
+},
+required: [
+"reason"
+]
+},
+ReplyCreateRequest: {
+type: "object",
+properties: {
+content: {
+type: "string",
+description: "댓글 본문",
+maxLength: 500,
+minLength: 0
+}
+},
+required: [
+"content"
+]
+},
+AdminReportProcessRequest: {
+type: "object",
+properties: {
+status: {
+type: "string"
+}
+}
+},
+SubscribeCreatorListResponse: {
+type: "object",
+properties: {
+subscription_id: {
+type: "integer",
+format: "int64"
+},
+memberId: {
+type: "integer",
+format: "int64"
+},
+creatorId: {
+type: "integer",
+format: "int64"
+},
+creatorName: {
+type: "string"
+},
+creatorUniqueId: {
+type: "string"
+},
+profileImage: {
+type: "string"
+},
+introduction: {
+type: "string"
+},
+status: {
+type: "string"
+},
+startDate: {
+type: "string",
+format: "date-time"
+},
+endDate: {
+type: "string",
+format: "date-time"
+},
+nextBillingAt: {
+type: "string",
+format: "date-time"
+}
+}
+},
+PostDetailResponse: {
+type: "object",
+properties: {
+id: {
+type: "integer",
+format: "int64"
+},
+memberId: {
+type: "integer",
+format: "int64"
+},
+content: {
+type: "string"
+},
+fileUrl: {
+type: "string"
+},
+likeCount: {
+type: "integer",
+format: "int32"
+},
+subscriberOnly: {
+type: "boolean"
+},
+createdAt: {
+type: "string",
+format: "date-time"
+},
+updatedAt: {
+type: "string",
+format: "date-time"
+},
+images: {
+type: "array",
+items: {
+$ref: "#/components/schemas/PostImageResponse"
+}
+}
+}
+},
+PostImageResponse: {
+type: "object",
+properties: {
+id: {
+type: "integer",
+format: "int64"
+},
+imageUrl: {
+type: "string"
+},
+imageOrder: {
+type: "integer",
+format: "int32"
+}
+}
+},
+ReplyPageResponse: {
+type: "object",
+properties: {
+replies: {
+type: "array",
+items: {
+$ref: "#/components/schemas/ReplyResponse"
+}
+},
+nextCursor: {
+type: "integer",
+format: "int64"
+},
+hasNext: {
+type: "boolean"
+}
+}
+},
+ReplyResponse: {
+type: "object",
+properties: {
+id: {
+type: "integer",
+format: "int64"
+},
+memberId: {
+type: "integer",
+format: "int64"
+},
+name: {
+type: "string"
+},
+uniqueId: {
+type: "string"
+},
+profileImage: {
+type: "string"
+},
+content: {
+type: "string"
+},
+likeCount: {
+type: "integer",
+format: "int32"
+},
+createdAt: {
+type: "string",
+format: "date-time"
+},
+updatedAt: {
+type: "string",
+format: "date-time"
+}
+}
+},
+FollowResponse: {
+type: "object",
+properties: {
+targetId: {
+type: "integer",
+format: "int64"
+},
+isFollowing: {
+type: "boolean"
+},
+followerCount: {
+type: "integer",
+format: "int32"
+},
+memberId: {
+type: "integer",
+format: "int64"
+},
+followingCount: {
+type: "integer",
+format: "int32"
+}
+}
+},
+FeedResponse: {
+type: "object",
+properties: {
+posts: {
+type: "array",
+items: {
+$ref: "#/components/schemas/PostCardResponse"
+}
+},
+nextCursor: {
+type: "integer",
+format: "int64"
+},
+hasNext: {
+type: "boolean"
+}
+}
+},
+PostCardResponse: {
+type: "object",
+properties: {
+postId: {
+type: "integer",
+format: "int64"
+},
+memberId: {
+type: "integer",
+format: "int64"
+},
+memberName: {
+type: "string"
+},
+uniqueId: {
+type: "string"
+},
+profileImageUrl: {
+type: "string"
+},
+content: {
+type: "string"
+},
+mainImageUrl: {
+type: "string"
+},
+likeCount: {
+type: "integer",
+format: "int32"
+},
+commentCount: {
+type: "integer",
+format: "int32"
+},
+subscriberOnly: {
+type: "boolean"
+},
+createdAt: {
+type: "string",
+format: "date-time"
+}
+}
+},
+AdminReportSearchRequest: {
+type: "object",
+properties: {
+targetType: {
+type: "string"
+},
+status: {
+type: "string"
+},
+page: {
+type: "integer",
+format: "int32"
+},
+size: {
+type: "integer",
+format: "int32"
+},
+offset: {
+type: "integer",
+format: "int32"
+}
+}
+},
+AdminReportResponse: {
+type: "object",
+properties: {
+id: {
+type: "integer",
+format: "int64"
+},
+targetType: {
+type: "string"
+},
+reporterName: {
+type: "string"
+},
+targetUserName: {
+type: "string"
+},
+content: {
+type: "string"
+},
+reason: {
+type: "string"
+},
+createdAt: {
+type: "string",
+format: "date-time"
+},
+status: {
+type: "string"
+}
+}
+},
+AdminReportDetailResponse: {
+type: "object",
+properties: {
+id: {
+type: "integer",
+format: "int64"
+},
+targetType: {
+type: "string"
+},
+postId: {
+type: "integer",
+format: "int64"
+},
+replyId: {
+type: "integer",
+format: "int64"
+},
+targetMemberId: {
+type: "integer",
+format: "int64"
+},
+reporterName: {
+type: "string"
+},
+targetUserName: {
+type: "string"
+},
+content: {
+type: "string"
+},
+reason: {
+type: "string"
+},
+reportContent: {
+type: "string"
+},
+createdAt: {
+type: "string",
+format: "date-time"
+},
+status: {
+type: "string"
+}
+}
+},
+AdminOperationResponse: {
+type: "object",
+properties: {
+pendingReportCount: {
+type: "integer",
+format: "int32"
+},
+totalMember: {
+type: "integer",
+format: "int32"
+}
+}
+},
+AdminPaymentSearchRequest: {
+type: "object",
+properties: {
+keyword: {
+type: "string"
+},
+paymentStatus: {
+type: "string"
+},
+startDate: {
+type: "string",
+format: "date"
+},
+endDate: {
+type: "string",
+format: "date"
+},
+page: {
+type: "integer",
+format: "int32"
+},
+size: {
+type: "integer",
+format: "int32"
+}
+}
+},
+AdminPaymentResponse: {
+type: "object",
+properties: {
+paymentId: {
+type: "integer",
+format: "int64"
+},
+paymentDate: {
+type: "string",
+format: "date-time"
+},
+sellerNickname: {
+type: "string"
+},
+buyerNickname: {
+type: "string"
+},
+buyerId: {
+type: "string"
+},
+amount: {
+type: "integer",
+format: "int32"
+},
+paymentStatus: {
+type: "string"
+}
+}
+},
+AdminPaymentDetailResponse: {
+type: "object",
+properties: {
+paymentId: {
+type: "integer",
+format: "int64"
+},
+paymentDate: {
+type: "string",
+format: "date-time"
+},
+buyerNickname: {
+type: "string"
+},
+buyerId: {
+type: "string"
+},
+amount: {
+type: "integer",
+format: "int32"
+},
+paymentStatus: {
+type: "string"
+},
+paymentMethod: {
+type: "string"
+},
+merchantUid: {
+type: "string"
+},
+impUid: {
+type: "string"
+},
+sellerNickname: {
+type: "string"
+},
+sellerId: {
+type: "string"
+},
+subStartDate: {
+type: "string",
+format: "date-time"
+},
+subEndDate: {
+type: "string",
+format: "date-time"
+},
+nextBillingAt: {
+type: "string",
+format: "date-time"
+},
+subStatus: {
+type: "string"
+}
+}
+},
+AdminMemberSearchRequest: {
+type: "object",
+properties: {
+keyword: {
+type: "string"
+},
+searchType: {
+type: "string"
+},
+memberStatus: {
+type: "string"
+},
+creatorStatus: {
+type: "string"
+},
+page: {
+type: "integer",
+format: "int32"
+},
+size: {
+type: "integer",
+format: "int32"
+}
+}
+},
+AdminMemberResponse: {
+type: "object",
+properties: {
+id: {
+type: "integer",
+format: "int64"
+},
+profileImage: {
+type: "string"
+},
+nickname: {
+type: "string"
+},
+userId: {
+type: "string"
+},
+memberStatus: {
+type: "string"
+},
+creatorStatus: {
+type: "string"
+},
+createdAt: {
+type: "string",
+format: "date-time"
+}
+}
+},
+AdminMemberDetailResponse: {
+type: "object",
+properties: {
+id: {
+type: "integer",
+format: "int64"
+},
+profileImage: {
+type: "string"
+},
+nickname: {
+type: "string"
+},
+userId: {
+type: "string"
+},
+email: {
+type: "string"
+},
+memberStatus: {
+type: "string"
+},
+creatorStatus: {
+type: "string"
+},
+createdAt: {
+type: "string",
+format: "date-time"
+},
+subscriptionPrice: {
+type: "integer",
+format: "int32"
+},
+subscriberCount: {
+type: "integer",
+format: "int32"
+}
+}
+}
+}
+}
+}

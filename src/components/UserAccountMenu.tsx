@@ -41,6 +41,14 @@ export function UserAccountMenu() {
         >
           <Link
             role="menuitem"
+            to="/subscriptions"
+            onClick={() => setOpen(false)}
+            className="block px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+          >
+            구독 관리
+          </Link>
+          <Link
+            role="menuitem"
             to="/settings"
             onClick={() => setOpen(false)}
             className="block px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
