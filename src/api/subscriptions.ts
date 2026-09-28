@@ -1,5 +1,8 @@
 import { fetchApiJson } from '@/api/http.ts';
-import type { SubscribeCreatorListResponse } from '@/types/subscription.ts';
+import type {
+  PagingSubListResponse,
+  SubscribeCreatorListResponse,
+} from '@/types/subscription.ts';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -15,7 +18,7 @@ function isSubscribeCreator(value: unknown): value is SubscribeCreatorListRespon
   }
 
   return (
-    typeof value.subscription_id === 'number' &&
+    typeof value.subscriptionId === 'number' &&
     typeof value.memberId === 'number' &&
     typeof value.creatorId === 'number' &&
     typeof value.creatorName === 'string' &&
@@ -29,26 +32,52 @@ function isSubscribeCreator(value: unknown): value is SubscribeCreatorListRespon
   );
 }
 
+function isPagingSubListResponse(value: unknown): value is PagingSubListResponse {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    Array.isArray(value.subCreatorList) &&
+    value.subCreatorList.every(isSubscribeCreator) &&
+    (value.nextCursor === null ||
+      value.nextCursor === undefined ||
+      typeof value.nextCursor === 'number') &&
+    typeof value.hasNext === 'boolean'
+  );
+}
+
 export async function fetchSubscriptions(
   memberId: number,
   accessToken: string | null,
+  cursor: number | null,
+  size: number,
   signal?: AbortSignal,
-): Promise<SubscribeCreatorListResponse[]> {
+): Promise<PagingSubListResponse> {
+  const params = new URLSearchParams({ size: String(size) });
+  if (cursor !== null) {
+    params.set('cursor', String(cursor));
+  }
+
   // 서버가 X-Member-Id 헤더로 로그인 회원을 식별한다.
-  const data = await fetchApiJson('/api/v1/subscriptions', {
+  const data = await fetchApiJson(`/api/v1/subscriptions?${params.toString()}`, {
     accessToken,
     headers: { 'X-Member-Id': String(memberId) },
     signal,
   });
-  if (!Array.isArray(data) || !data.every(isSubscribeCreator)) {
+  if (!isPagingSubListResponse(data)) {
     throw new Error('구독 목록 형식이 올바르지 않습니다.');
   }
   // 누락 필드(undefined)는 null 로 맞춘다.
-  return data.map((item) => ({
-    ...item,
-    profileImage: item.profileImage ?? null,
-    introduction: item.introduction ?? null,
-    endDate: item.endDate ?? null,
-    nextBillingAt: item.nextBillingAt ?? null,
-  }));
+  return {
+    subCreatorList: data.subCreatorList.map((item) => ({
+      ...item,
+      profileImage: item.profileImage ?? null,
+      introduction: item.introduction ?? null,
+      endDate: item.endDate ?? null,
+      nextBillingAt: item.nextBillingAt ?? null,
+    })),
+    nextCursor: data.nextCursor ?? null,
+    hasNext: data.hasNext,
+  };
 }

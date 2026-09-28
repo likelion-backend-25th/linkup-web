@@ -1,6 +1,6 @@
 /** GET /api/v1/subscriptions 항목 (SubscribeCreatorListResponse), status: ACTIVE | CANCELLED */
 export interface SubscribeCreatorListResponse {
-  subscription_id: number;
+  subscriptionId: number;
   memberId: number;
   creatorId: number;
   creatorName: string;
@@ -11,4 +11,11 @@ export interface SubscribeCreatorListResponse {
   startDate: string;
   endDate: string | null;
   nextBillingAt: string | null;
+}
+
+/** GET /api/v1/subscriptions 응답 (PagingSubListResponse) */
+export interface PagingSubListResponse {
+  subCreatorList: SubscribeCreatorListResponse[];
+  nextCursor: number | null;
+  hasNext: boolean;
 }
