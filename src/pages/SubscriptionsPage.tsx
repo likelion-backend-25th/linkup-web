@@ -23,7 +23,7 @@ function toDisplayStatus(item: SubscribeCreatorListResponse): SubscriptionDispla
 export function SubscriptionsPage() {
   const memberId = useAuthStore((state) => state.profile?.id ?? FALLBACK_MEMBER_ID);
   const accessToken = useAuthStore((state) => state.accessToken);
-  const { subscriptions, hasNext, loading, error, loadMore } = useSubscriptions(
+  const { subscriptions, totalCount, hasNext, loading, error, loadMore } = useSubscriptions(
     memberId,
     accessToken,
   );
@@ -54,19 +54,13 @@ export function SubscriptionsPage() {
   }, [error, hasNext, loadMore, loading, subscriptions.length]);
 
   const items = subscriptions.map((item) => ({ item, status: toDisplayStatus(item) }));
-  const activeCount = items.filter(({ status }) => status === 'active').length;
-  const countSuffix = hasNext ? '+' : '';
-
   return (
     <section className="flex h-full min-h-0 flex-col rounded-2xl bg-white px-5 py-4 shadow-sm">
       <header className="shrink-0 border-b border-zinc-100 pb-4">
         <h1 className="text-lg font-bold text-zinc-900">내가 구독한 사람</h1>
         <p className="mt-1 text-sm text-zinc-500">
           구독 중{' '}
-          <span className="font-semibold text-linkup">
-            {activeCount}
-            {countSuffix}
-          </span>
+          <span className="font-semibold text-linkup">{totalCount}</span>
         </p>
       </header>
 

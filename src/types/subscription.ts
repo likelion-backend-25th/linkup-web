@@ -13,6 +13,7 @@ export interface SubscribeCreatorListResponse {
 /** GET /api/v1/subscriptions 응답 (PagingSubListResponse) */
 export interface PagingSubListResponse {
   subCreatorList: SubscribeCreatorListResponse[];
+  subCreatorCount: number;
   nextCursor: number | null;
   hasNext: boolean;
 }

@@ -1229,6 +1229,10 @@
               "$ref": "#/components/schemas/SubscribeCreatorListResponse"
             }
           },
+          "subCreatorCount": {
+            "type": "integer",
+            "format": "int32"
+          },
           "nextCursor": {
             "type": "integer",
             "format": "int64"
