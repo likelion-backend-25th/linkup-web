@@ -6,6 +6,7 @@ import { isAbortError, toErrorMessage } from '@/api/http.ts';
 import { MemberAvatar } from '@/components/MemberAvatar.tsx';
 import { useAuthStore } from '@/stores/useAuthStore.ts';
 import type { PostFeedItem } from '@/types/feed.ts';
+import { toMediaUrl } from '@/utils/mediaUrl.ts';
 
 type ProfileTab = 'public' | 'subscriber';
 
@@ -170,7 +171,7 @@ export function ProfilePage() {
             <li key={post.postId}>
               <Link to={`/posts/${post.postId}`} className="block overflow-hidden rounded-2xl bg-zinc-100">
                 {post.mainImageUrl ? (
-                  <img src={post.mainImageUrl} alt="" className="aspect-square w-full object-cover" />
+                  <img src={toMediaUrl(post.mainImageUrl)} alt="" className="aspect-square w-full object-cover" />
                 ) : (
                   <span className="flex aspect-square items-center p-3 text-xs text-zinc-400">
                     {post.content}

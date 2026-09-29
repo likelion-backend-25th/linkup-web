@@ -2,6 +2,7 @@ import { Heart, MessageCircle } from 'lucide-react';
 import { Link } from 'react-router';
 import type { PostFeedItem } from '@/types/feed.ts';
 import { formatRelativeTime } from '@/utils/formatDateTime.ts';
+import { toMediaUrl } from '@/utils/mediaUrl.ts';
 
 interface PostCardProps {
   post: PostFeedItem;
@@ -14,7 +15,7 @@ export function PostCard({ post }: PostCardProps) {
         <div className="flex items-start gap-3">
           {post.profileImageUrl ? (
             <img
-              src={post.profileImageUrl}
+              src={toMediaUrl(post.profileImageUrl)}
               alt=""
               className="size-9 shrink-0 rounded-full object-cover"
             />
@@ -38,7 +39,7 @@ export function PostCard({ post }: PostCardProps) {
 
             {post.mainImageUrl ? (
               <img
-                src={post.mainImageUrl}
+                src={toMediaUrl(post.mainImageUrl)}
                 alt=""
                 className="mt-3 h-48 w-full rounded-xl object-cover"
               />

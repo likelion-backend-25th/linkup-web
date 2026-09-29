@@ -5,6 +5,7 @@ import { createPost, deletePost, fetchPost, savePostEdit } from '@/api/posts.ts'
 import { isAbortError, toErrorMessage } from '@/api/http.ts';
 import { ConfirmDialog } from '@/components/ConfirmDialog.tsx';
 import { useAuthStore } from '@/stores/useAuthStore.ts';
+import { toMediaUrl } from '@/utils/mediaUrl.ts';
 
 const MAX_IMAGES = 5;
 const MAX_CONTENT = 2000;
@@ -225,7 +226,7 @@ export function PostCreatePage() {
         <div className="relative flex min-h-56 items-center justify-center overflow-hidden rounded-2xl bg-zinc-50">
           {current ? (
             <>
-              <img src={current.url} alt="" className="h-full max-h-72 w-full object-cover" />
+              <img src={toMediaUrl(current.url)} alt="" className="h-full max-h-72 w-full object-cover" />
               <button
                 type="button"
                 aria-label="선택한 사진 삭제"
@@ -266,7 +267,7 @@ export function PostCreatePage() {
                     : 'relative block size-14 overflow-hidden rounded-xl ring-1 ring-zinc-200'
                 }
               >
-                <img src={image.url} alt="" className="size-full object-cover" />
+                <img src={toMediaUrl(image.url)} alt="" className="size-full object-cover" />
                 <span className="absolute bottom-0.5 left-0.5 rounded bg-black/55 px-1 text-[10px] font-medium text-white">
                   {index + 1}
                 </span>

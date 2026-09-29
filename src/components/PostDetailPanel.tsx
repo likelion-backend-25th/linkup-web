@@ -13,6 +13,7 @@ import { ReportDialog } from '@/components/ReportDialog.tsx';
 import type { FollowResponse } from '@/types/follow.ts';
 import type { PostDetailResponse } from '@/types/post.ts';
 import { formatRelativeTime } from '@/utils/formatDateTime.ts';
+import { toMediaUrl } from '@/utils/mediaUrl.ts';
 
 interface PostDetailPanelProps {
   post: PostDetailResponse;
@@ -175,7 +176,7 @@ export function PostDetailPanel({
 
       {post.fileUrl && (
         <a
-          href={post.fileUrl}
+          href={toMediaUrl(post.fileUrl)}
           className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-linkup hover:underline"
         >
           <Download className="size-4" aria-hidden />
