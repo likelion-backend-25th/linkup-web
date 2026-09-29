@@ -32,6 +32,8 @@ export function FeedPage() {
       .map((post) => ({
         memberId: post.memberId,
         nickname: post.memberName,
+        uniqueId: post.uniqueId,
+        profileImage: post.profileImageUrl,
       }));
   }, [followingPosts]);
 
@@ -56,14 +58,24 @@ export function FeedPage() {
         </div>
 
         <div ref={feedScrollRef} className="min-h-0 flex-1 overflow-y-auto">
-          {tab === 'following' ? (
+          {tab === 'following' && (
             <FollowingFeedList
               enabled
+              feedType="following"
               query={query}
               scrollRoot={feedScrollRef}
               onPostsChange={setFollowingPosts}
             />
-          ) : (
+          )}
+          {tab === 'subscribe' && (
+            <FollowingFeedList
+              enabled
+              feedType="subscription"
+              query={query}
+              scrollRoot={feedScrollRef}
+            />
+          )}
+          {tab === 'popular' && (
             <p className="py-8 text-sm text-zinc-400">이 피드는 곧 열려요.</p>
           )}
         </div>

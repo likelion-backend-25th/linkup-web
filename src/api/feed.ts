@@ -56,10 +56,42 @@ export async function fetchFollowingFeed(
   return data;
 }
 
+export async function fetchSubscriptionFeed(
+  cursor: number | null,
+  size: number,
+  signal?: AbortSignal,
+): Promise<FollowingFeedResponse> {
+  const params = new URLSearchParams({ size: String(size) });
+  if (cursor !== null) {
+    params.set('cursor', String(cursor));
+  }
+
+  const data = await fetchApiJson(`/api/v1/feeds/subscription?${params.toString()}`, { signal });
+  if (!isFollowingFeedResponse(data)) {
+    throw new Error('구독 피드 응답 형식이 올바르지 않습니다.');
+  }
+  return data;
+}
+
 export async function fetchMyPosts(subscriberOnly: boolean, signal?: AbortSignal): Promise<PostFeedItem[]> {
   const path = subscriberOnly
     ? '/api/v1/members/me/feeds/subscriber-only'
     : '/api/v1/members/me/feeds';
+  return fetchPostsByPath(path, signal);
+}
+
+export async function fetchMemberPosts(
+  memberId: number,
+  subscriberOnly: boolean,
+  signal?: AbortSignal,
+): Promise<PostFeedItem[]> {
+  const path = subscriberOnly
+    ? `/api/v1/members/${memberId}/feeds/subscriber-only`
+    : `/api/v1/members/${memberId}/feeds`;
+  return fetchPostsByPath(path, signal);
+}
+
+async function fetchPostsByPath(path: string, signal?: AbortSignal): Promise<PostFeedItem[]> {
   const posts: PostFeedItem[] = [];
   let cursor: number | null = null;
 

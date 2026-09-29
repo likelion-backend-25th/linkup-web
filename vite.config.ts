@@ -28,7 +28,15 @@ export default defineConfig(({ mode }) => {
           target: apiOrigin,
           changeOrigin: true,
         },
-        // 업로드 파일은 프론트 배포 도메인에서 열림. 로컬에서도 상세 화면 확인이 되게 같은 경로를 넘긴다.
+        // 업로드 파일은 프론트 배포 도메인에서 열림. 로컬에서도 피드와 상세 확인이 되게 같은 경로를 넘긴다.
+        '/assets/postImages': {
+          target: 'https://linkup.likelion.shop',
+          changeOrigin: true,
+        },
+        '/assets/files': {
+          target: 'https://linkup.likelion.shop',
+          changeOrigin: true,
+        },
         '/posts/images': {
           target: 'https://linkup.likelion.shop',
           changeOrigin: true,

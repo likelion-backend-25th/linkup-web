@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, ImagePlus, Plus, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ImagePlus, Pencil, Plus, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router';
 import { createPost, deletePost, fetchPost, savePostEdit } from '@/api/posts.ts';
 import { isAbortError, toErrorMessage } from '@/api/http.ts';
 import { ConfirmDialog } from '@/components/ConfirmDialog.tsx';
+import { ImageCropDialog } from '@/components/ImageCropDialog.tsx';
+import { MediaImage } from '@/components/MediaImage.tsx';
 import { useAuthStore } from '@/stores/useAuthStore.ts';
-import { toMediaUrl } from '@/utils/mediaUrl.ts';
+import { legacyMediaUrl, toMediaUrl } from '@/utils/mediaUrl.ts';
 
 const MAX_IMAGES = 5;
 const MAX_CONTENT = 2000;
@@ -13,6 +15,22 @@ const MAX_CONTENT = 2000;
 type PreviewImage =
   | { kind: 'remote'; id: number; url: string }
   | { kind: 'local'; file: File; url: string };
+
+interface CropTarget {
+  index: number;
+  imageUrl: string;
+  fileName: string;
+  originalAspect: number;
+}
+
+function loadImageSize(src: string): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve({ width: image.naturalWidth, height: image.naturalHeight });
+    image.onerror = () => reject(new Error('사진을 불러오지 못했습니다.'));
+    image.src = src;
+  });
+}
 
 export function PostCreatePage() {
   const navigate = useNavigate();
@@ -36,6 +54,7 @@ export function PostCreatePage() {
   const [pending, setPending] = useState(false);
   const [loadingPost, setLoadingPost] = useState(isEdit);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [cropTarget, setCropTarget] = useState<CropTarget | null>(null);
   imagesRef.current = images;
 
   useEffect(() => {
@@ -137,6 +156,57 @@ export function PostCreatePage() {
     setSelected(Math.max(0, Math.min(selected, next.length - 1)));
   }
 
+  async function openImageEditor(index: number) {
+    const image = images[index];
+    if (!image) {
+      return;
+    }
+
+    const preferred = toMediaUrl(image.url);
+    const legacy = legacyMediaUrl(image.url);
+    let sourceUrl = preferred;
+    let size: { width: number; height: number };
+
+    try {
+      size = await loadImageSize(preferred);
+    } catch {
+      sourceUrl = legacy;
+      try {
+        size = await loadImageSize(legacy);
+      } catch (caught: unknown) {
+        setError(toErrorMessage(caught));
+        return;
+      }
+    }
+
+    setError(null);
+    setCropTarget({
+      index,
+      imageUrl: sourceUrl,
+      fileName: image.kind === 'local' ? image.file.name : `post-image-${image.id}.jpg`,
+      originalAspect: size.width / size.height,
+    });
+  }
+
+  function applyCroppedImage(file: File) {
+    if (!cropTarget) {
+      return;
+    }
+    const previous = images[cropTarget.index];
+    if (previous?.kind === 'local') {
+      URL.revokeObjectURL(previous.url);
+    }
+    const next = [...images];
+    next[cropTarget.index] = {
+      kind: 'local',
+      file,
+      url: URL.createObjectURL(file),
+    };
+    setImages(next);
+    setSelected(cropTarget.index);
+    setCropTarget(null);
+  }
+
   async function onSubmit() {
     if (!accessToken) {
       setError('로그인 후 이용할 수 있습니다.');
@@ -226,7 +296,11 @@ export function PostCreatePage() {
         <div className="relative flex min-h-56 items-center justify-center overflow-hidden rounded-2xl bg-zinc-50">
           {current ? (
             <>
-              <img src={toMediaUrl(current.url)} alt="" className="h-full max-h-72 w-full object-cover" />
+              <MediaImage
+                src={current.url}
+                alt=""
+                className="h-full max-h-72 w-full object-contain"
+              />
               <button
                 type="button"
                 aria-label="선택한 사진 삭제"
@@ -234,6 +308,15 @@ export function PostCreatePage() {
                 className="absolute top-3 right-3 rounded-full bg-white/90 p-1.5 text-zinc-600 shadow-sm"
               >
                 <X className="size-4" aria-hidden />
+              </button>
+              <button
+                type="button"
+                aria-label="선택한 사진 편집"
+                onClick={() => void openImageEditor(selected)}
+                className="absolute top-3 left-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1.5 text-xs font-medium text-zinc-700 shadow-sm"
+              >
+                <Pencil className="size-3.5" aria-hidden />
+                편집
               </button>
             </>
           ) : (
@@ -267,7 +350,7 @@ export function PostCreatePage() {
                     : 'relative block size-14 overflow-hidden rounded-xl ring-1 ring-zinc-200'
                 }
               >
-                <img src={toMediaUrl(image.url)} alt="" className="size-full object-cover" />
+                <MediaImage src={image.url} alt="" className="size-full object-cover" />
                 <span className="absolute bottom-0.5 left-0.5 rounded bg-black/55 px-1 text-[10px] font-medium text-white">
                   {index + 1}
                 </span>
@@ -418,6 +501,16 @@ export function PostCreatePage() {
           pending={pending}
           onClose={() => setConfirmDelete(false)}
           onConfirm={() => void onDelete()}
+        />
+      )}
+
+      {cropTarget && (
+        <ImageCropDialog
+          imageUrl={cropTarget.imageUrl}
+          fileName={cropTarget.fileName}
+          originalAspect={cropTarget.originalAspect}
+          onClose={() => setCropTarget(null)}
+          onSave={applyCroppedImage}
         />
       )}
     </section>

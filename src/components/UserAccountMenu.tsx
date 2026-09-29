@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Ellipsis } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
+import { MemberAvatar } from '@/components/MemberAvatar.tsx';
 import { useAuthStore } from '@/stores/useAuthStore.ts';
-import { toMediaUrl } from '@/utils/mediaUrl.ts';
 
 export function UserAccountMenu() {
   const navigate = useNavigate();
@@ -68,17 +68,7 @@ export function UserAccountMenu() {
       )}
 
       <div className="flex items-center gap-3">
-        {profile?.profileImage ? (
-          <img
-            src={toMediaUrl(profile.profileImage)}
-            alt=""
-            className="size-10 shrink-0 rounded-full object-cover"
-          />
-        ) : (
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-linkup-soft text-sm font-semibold text-linkup">
-            {displayName.slice(0, 1)}
-          </span>
-        )}
+        <MemberAvatar name={displayName} imageUrl={profile?.profileImage ?? null} />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-zinc-900">{displayName}</p>
           <p className="truncate text-xs text-zinc-400">@{handle}</p>

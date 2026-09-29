@@ -22,6 +22,7 @@ export default function App() {
           <Route path="/subscriptions" element={<SubscriptionsPage />} />
           <Route path="/notifications" element={<PlaceholderPage title="알림" />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/members/:memberId" element={<ProfilePage />} />
           <Route path="/admin" element={<PlaceholderPage title="관리자페이지" />} />
           <Route path="/settings" element={<PlaceholderPage title="설정" />} />
         </Route>

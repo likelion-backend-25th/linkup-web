@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Download, Heart, MessageCircle } from 'lucide-react';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { fetchFollow, setFollow } from '@/api/follow.ts';
 import { isAbortError, toErrorMessage } from '@/api/http.ts';
 import { deletePost, reportPost, setPostLike } from '@/api/posts.ts';
@@ -128,15 +128,25 @@ export function PostDetailPanel({
   return (
     <div className="flex h-full min-h-0 flex-col px-5 py-4">
       <div className="flex items-start gap-3">
-        <MemberAvatar name={post.name} imageUrl={post.profileImage} />
-        <div className="min-w-0 flex-1">
+        <Link
+          to={`/members/${post.memberId}`}
+          state={{ name: post.name, uniqueId: post.uniqueId, profileImage: post.profileImage }}
+          aria-label={`${post.name} 프로필`}
+        >
+          <MemberAvatar name={post.name} imageUrl={post.profileImage} />
+        </Link>
+        <Link
+          to={`/members/${post.memberId}`}
+          state={{ name: post.name, uniqueId: post.uniqueId, profileImage: post.profileImage }}
+          className="min-w-0 flex-1 hover:text-linkup"
+        >
           <p className="truncate text-sm font-semibold text-zinc-900">{post.name}</p>
           <p className="truncate text-xs text-zinc-400">
             @{post.uniqueId}
             <span className="mx-1">·</span>
             <time dateTime={post.createdAt}>{formatRelativeTime(post.createdAt)}</time>
           </p>
-        </div>
+        </Link>
         {!isOwner && (
           <button
             type="button"
