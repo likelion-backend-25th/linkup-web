@@ -3,9 +3,10 @@ import { Download, Heart, MessageCircle } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { fetchFollow, setFollow } from '@/api/follow.ts';
 import { isAbortError, toErrorMessage } from '@/api/http.ts';
-import { deletePost, fetchPost, reportPost, setPostLike, updatePostContent } from '@/api/posts.ts';
+import { deletePost, reportPost, setPostLike } from '@/api/posts.ts';
 import { reportReply } from '@/api/replies.ts';
 import { ActionMenu } from '@/components/ActionMenu.tsx';
+import { ConfirmDialog } from '@/components/ConfirmDialog.tsx';
 import { MemberAvatar } from '@/components/MemberAvatar.tsx';
 import { PostReplySection } from '@/components/PostReplySection.tsx';
 import { ReportDialog } from '@/components/ReportDialog.tsx';
@@ -36,10 +37,10 @@ export function PostDetailPanel({
   const isOwner = viewerId === post.memberId;
   const [follow, setFollowState] = useState<FollowResponse | null>(null);
   const [replyCount, setReplyCount] = useState(0);
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(post.content);
   const [notice, setNotice] = useState<string | null>(null);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -95,33 +96,19 @@ export function PostDetailPanel({
     }
   }
 
-  async function saveContent() {
-    if (!accessToken) {
-      setNotice(loginMessage());
-      return;
-    }
-    try {
-      await updatePostContent(post, draft.trim(), accessToken);
-      onPostChange(await fetchPost(post.id));
-      setEditing(false);
-    } catch (caught: unknown) {
-      setNotice(toErrorMessage(caught));
-    }
-  }
-
   async function removePost() {
     if (!accessToken) {
       setNotice(loginMessage());
       return;
     }
-    if (!window.confirm('이 게시글을 삭제할까요?')) {
-      return;
-    }
+    setDeleting(true);
     try {
       await deletePost(post.id, accessToken);
       await navigate('/');
     } catch (caught: unknown) {
       setNotice(toErrorMessage(caught));
+      setDeleting(false);
+      setConfirmDelete(false);
     }
   }
 
@@ -172,8 +159,8 @@ export function PostDetailPanel({
           items={
             isOwner
               ? [
-                  { label: '수정하기', onSelect: () => setEditing(true) },
-                  { label: '삭제하기', danger: true, onSelect: () => void removePost() },
+                  { label: '수정하기', onSelect: () => void navigate(`/posts/${post.id}/edit`) },
+                  { label: '삭제하기', danger: true, onSelect: () => setConfirmDelete(true) },
                 ]
               : [{ label: '신고하기', onSelect: () => setReportTarget({ kind: 'post' }) }]
           }
@@ -184,27 +171,7 @@ export function PostDetailPanel({
         <p className="mt-3 text-xs font-medium text-linkup">구독자 전용</p>
       )}
 
-      {editing ? (
-        <div className="mt-4">
-          <textarea
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            rows={5}
-            maxLength={2000}
-            className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-linkup"
-          />
-          <div className="mt-2 flex gap-2">
-            <button type="button" onClick={() => void saveContent()} className="text-sm font-medium text-linkup">
-              저장
-            </button>
-            <button type="button" onClick={() => setEditing(false)} className="text-sm text-zinc-500">
-              취소
-            </button>
-          </div>
-        </div>
-      ) : (
-        <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-zinc-800">{post.content}</p>
-      )}
+      <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-zinc-800">{post.content}</p>
 
       {post.fileUrl && (
         <a
@@ -235,12 +202,22 @@ export function PostDetailPanel({
         <h2 className="mb-2 text-sm font-semibold text-zinc-900">댓글 {replyCount}</h2>
         <PostReplySection
           postId={post.id}
+          postAuthorId={post.memberId}
           viewerId={viewerId}
           accessToken={accessToken}
           onCount={setReplyCount}
           onReport={(replyId) => setReportTarget({ kind: 'reply', replyId })}
         />
       </div>
+
+      {confirmDelete && (
+        <ConfirmDialog
+          message="정말 삭제하시겠습니까?"
+          pending={deleting}
+          onClose={() => setConfirmDelete(false)}
+          onConfirm={() => void removePost()}
+        />
+      )}
 
       {reportTarget && (
         <ReportDialog
