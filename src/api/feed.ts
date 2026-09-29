@@ -55,3 +55,29 @@ export async function fetchFollowingFeed(
   }
   return data;
 }
+
+export async function fetchMyPosts(subscriberOnly: boolean, signal?: AbortSignal): Promise<PostFeedItem[]> {
+  const path = subscriberOnly
+    ? '/api/v1/members/me/feeds/subscriber-only'
+    : '/api/v1/members/me/feeds';
+  const posts: PostFeedItem[] = [];
+  let cursor: number | null = null;
+
+  for (;;) {
+    const params = new URLSearchParams({ size: '10' });
+    if (cursor !== null) {
+      params.set('cursor', String(cursor));
+    }
+    const data = await fetchApiJson(`${path}?${params.toString()}`, { signal });
+    if (!isFollowingFeedResponse(data)) {
+      throw new Error('내 게시글 응답 형식이 올바르지 않습니다.');
+    }
+    posts.push(...data.posts);
+    if (!data.hasNext || data.nextCursor === null) {
+      break;
+    }
+    cursor = data.nextCursor;
+  }
+
+  return posts;
+}

@@ -3,12 +3,13 @@ import { useState } from 'react';
 interface MemberAvatarProps {
   name: string;
   imageUrl: string | null;
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
 }
 
 export function MemberAvatar({ name, imageUrl, size = 'md' }: MemberAvatarProps) {
   const [failed, setFailed] = useState(false);
-  const box = size === 'sm' ? 'size-8 text-xs' : 'size-11 text-sm';
+  const box =
+    size === 'lg' ? 'size-20 text-2xl' : size === 'sm' ? 'size-8 text-xs' : 'size-11 text-sm';
 
   if (!imageUrl || failed) {
     return (

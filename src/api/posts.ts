@@ -150,31 +150,32 @@ export async function reportPost(
   });
 }
 
-export async function updatePostContent(
-  post: PostDetailResponse,
+export async function savePostEdit(
+  id: number,
   content: string,
+  subscriberOnly: boolean,
+  removeFile: boolean,
+  imageRequest: { imageId: number | null; newImageIndex: number | null }[],
+  newImages: File[],
+  file: File | null,
   accessToken: string,
 ): Promise<void> {
   const form = new FormData();
   form.append(
     'request',
     new Blob(
-      [
-        JSON.stringify({
-          content,
-          subscriberOnly: post.subscriberOnly,
-          removeFile: false,
-          imageRequest: post.images.map((image) => ({
-            imageId: image.id,
-            newImageIndex: image.imageOrder,
-          })),
-        }),
-      ],
+      [JSON.stringify({ content, subscriberOnly, removeFile, imageRequest })],
       { type: 'application/json' },
     ),
   );
+  for (const image of newImages) {
+    form.append('newImages', image);
+  }
+  if (file) {
+    form.append('file', file);
+  }
 
-  await fetchApiJson(`/api/v1/posts/${post.id}`, {
+  await fetchApiJson(`/api/v1/posts/${id}`, {
     method: 'PUT',
     accessToken,
     body: form,

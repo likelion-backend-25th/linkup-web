@@ -9,12 +9,14 @@ import {
 } from '@/api/replies.ts';
 import { isAbortError, toErrorMessage } from '@/api/http.ts';
 import { ActionMenu } from '@/components/ActionMenu.tsx';
+import { ConfirmDialog } from '@/components/ConfirmDialog.tsx';
 import { MemberAvatar } from '@/components/MemberAvatar.tsx';
 import type { ReplyResponse } from '@/types/reply.ts';
 import { formatRelativeTime } from '@/utils/formatDateTime.ts';
 
 interface PostReplySectionProps {
   postId: number;
+  postAuthorId: number;
   viewerId: number | null;
   accessToken: string | null;
   onCount: (count: number) => void;
@@ -27,6 +29,7 @@ function loginMessage() {
 
 export function PostReplySection({
   postId,
+  postAuthorId,
   viewerId,
   accessToken,
   onCount,
@@ -40,6 +43,8 @@ export function PostReplySection({
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingText, setEditingText] = useState('');
   const [likedIds, setLikedIds] = useState<Record<number, boolean>>({});
+  const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -121,14 +126,16 @@ export function PostReplySection({
       setError(loginMessage());
       return;
     }
-    if (!window.confirm('이 댓글을 삭제할까요?')) {
-      return;
-    }
+    setDeleting(true);
     try {
       await deleteReply(postId, replyId, accessToken);
+      setDeleteTargetId(null);
       await reload();
     } catch (caught: unknown) {
       setError(toErrorMessage(caught));
+      setDeleteTargetId(null);
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -153,6 +160,31 @@ export function PostReplySection({
     }
   }
 
+  function replyActions(reply: ReplyResponse) {
+    const mine = viewerId !== null && viewerId === reply.memberId;
+    const ownPost = viewerId !== null && viewerId === postAuthorId;
+    const edit = {
+      label: '수정하기',
+      onSelect: () => {
+        setEditingId(reply.id);
+        setEditingText(reply.content);
+      },
+    };
+    const remove = {
+      label: '삭제하기',
+      danger: true,
+      onSelect: () => setDeleteTargetId(reply.id),
+    };
+
+    if (mine) {
+      return [edit, remove];
+    }
+    if (ownPost) {
+      return [remove];
+    }
+    return [{ label: '신고하기', onSelect: () => onReport(reply.id) }];
+  }
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 overflow-y-auto">
@@ -171,24 +203,7 @@ export function PostReplySection({
                   </p>
                   <ActionMenu
                     label="댓글 메뉴"
-                    items={
-                      viewerId === reply.memberId
-                        ? [
-                            {
-                              label: '수정하기',
-                              onSelect: () => {
-                                setEditingId(reply.id);
-                                setEditingText(reply.content);
-                              },
-                            },
-                            {
-                              label: '삭제하기',
-                              danger: true,
-                              onSelect: () => void removeReply(reply.id),
-                            },
-                          ]
-                        : [{ label: '신고하기', onSelect: () => onReport(reply.id) }]
-                    }
+                    items={replyActions(reply)}
                   />
                 </div>
                 {editingId === reply.id ? (
@@ -253,6 +268,15 @@ export function PostReplySection({
           등록
         </button>
       </form>
+
+      {deleteTargetId !== null && (
+        <ConfirmDialog
+          message="정말 삭제하시겠습니까?"
+          pending={deleting}
+          onClose={() => setDeleteTargetId(null)}
+          onConfirm={() => void removeReply(deleteTargetId)}
+        />
+      )}
     </div>
   );
 }
