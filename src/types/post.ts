@@ -20,12 +20,16 @@ export interface PostImageResponse {
 export interface PostDetailResponse {
   id: number;
   memberId: number;
+  name: string;
+  uniqueId: string;
+  profileImage: string | null;
   content: string;
   fileUrl: string | null;
   likeCount: number;
   subscriberOnly: boolean;
   createdAt: string;
   updatedAt: string;
+  likedByMe: boolean;
   images: PostImageResponse[];
 }
 

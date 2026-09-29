@@ -54,12 +54,16 @@ function isPostDetailResponse(value: unknown): value is PostDetailResponse {
   return (
     typeof value.id === 'number' &&
     typeof value.memberId === 'number' &&
+    typeof value.name === 'string' &&
+    typeof value.uniqueId === 'string' &&
+    (value.profileImage === null || typeof value.profileImage === 'string') &&
     typeof value.content === 'string' &&
     (value.fileUrl === null || typeof value.fileUrl === 'string') &&
     typeof value.likeCount === 'number' &&
     typeof value.subscriberOnly === 'boolean' &&
     typeof value.createdAt === 'string' &&
     typeof value.updatedAt === 'string' &&
+    typeof value.likedByMe === 'boolean' &&
     Array.isArray(value.images) &&
     value.images.every(isPostImage)
   );
@@ -89,9 +93,91 @@ export async function updatePost(
   return data;
 }
 
+export async function createPost(
+  content: string,
+  subscriberOnly: boolean,
+  images: File[],
+  file: File | null,
+  accessToken: string,
+): Promise<number> {
+  const form = new FormData();
+  form.append(
+    'request',
+    new Blob([JSON.stringify({ content, subscriberOnly })], { type: 'application/json' }),
+  );
+  for (const image of images) {
+    form.append('images', image);
+  }
+  if (file) {
+    form.append('file', file);
+  }
+
+  const data = await fetchApiJson('/api/v1/posts', {
+    method: 'POST',
+    accessToken,
+    body: form,
+  });
+  if (!isRecord(data) || typeof data.id !== 'number') {
+    throw new Error('게시글 등록 응답 형식이 올바르지 않습니다.');
+  }
+  return data.id;
+}
+
 export async function deletePost(id: number, accessToken: string): Promise<void> {
   await fetchApiJson(`/api/v1/posts/${id}`, {
     method: 'DELETE',
     accessToken,
+  });
+}
+
+export async function setPostLike(id: number, liked: boolean, accessToken: string): Promise<void> {
+  await fetchApiJson(`/api/v1/posts/${id}/likes`, {
+    method: liked ? 'POST' : 'DELETE',
+    accessToken,
+  });
+}
+
+export async function reportPost(
+  id: number,
+  reason: string,
+  content: string,
+  accessToken: string,
+): Promise<void> {
+  await fetchApiJson(`/api/v1/posts/${id}/reports`, {
+    method: 'POST',
+    accessToken,
+    body: { reason, content },
+  });
+}
+
+export async function savePostEdit(
+  id: number,
+  content: string,
+  subscriberOnly: boolean,
+  removeFile: boolean,
+  imageRequest: { imageId: number | null; newImageIndex: number | null }[],
+  newImages: File[],
+  file: File | null,
+  accessToken: string,
+): Promise<void> {
+  const form = new FormData();
+  form.append(
+    'request',
+    new Blob(
+      [JSON.stringify({ content, subscriberOnly, removeFile, imageRequest })],
+      { type: 'application/json' },
+    ),
+  );
+  for (const image of newImages) {
+    form.append('newImages', image);
+  }
+  if (file) {
+    form.append('file', file);
+  }
+
+  await fetchApiJson(`/api/v1/posts/${id}`, {
+    method: 'PUT',
+    accessToken,
+    body: form,
   });
 }
