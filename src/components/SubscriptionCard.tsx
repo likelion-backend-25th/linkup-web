@@ -4,6 +4,7 @@ import {
   type SubscriptionDisplayStatus,
 } from '@/components/SubscriptionStatusBadge.tsx';
 import type { SubscribeCreatorListResponse } from '@/types/subscription.ts';
+import { toMediaUrl } from '@/utils/mediaUrl.ts';
 
 interface SubscriptionCardProps {
   subscription: SubscribeCreatorListResponse;
@@ -25,7 +26,7 @@ export function SubscriptionCard({
         <Link to={profilePath} className="absolute -bottom-7 left-5">
           {subscription.profileImage ? (
             <img
-              src={subscription.profileImage}
+              src={toMediaUrl(subscription.profileImage)}
               alt=""
               className="size-14 rounded-full border-4 border-white object-cover"
             />
