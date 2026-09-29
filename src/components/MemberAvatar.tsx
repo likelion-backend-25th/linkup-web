@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toMediaUrl } from '@/utils/mediaUrl.ts';
 
 interface MemberAvatarProps {
   name: string;
@@ -23,7 +24,7 @@ export function MemberAvatar({ name, imageUrl, size = 'md' }: MemberAvatarProps)
 
   return (
     <img
-      src={imageUrl}
+      src={toMediaUrl(imageUrl)}
       alt=""
       onError={() => setFailed(true)}
       className={`${box} shrink-0 rounded-full object-cover`}

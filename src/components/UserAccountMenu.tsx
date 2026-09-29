@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Ellipsis } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { useAuthStore } from '@/stores/useAuthStore.ts';
+import { toMediaUrl } from '@/utils/mediaUrl.ts';
 
 export function UserAccountMenu() {
   const navigate = useNavigate();
@@ -69,7 +70,7 @@ export function UserAccountMenu() {
       <div className="flex items-center gap-3">
         {profile?.profileImage ? (
           <img
-            src={profile.profileImage}
+            src={toMediaUrl(profile.profileImage)}
             alt=""
             className="size-10 shrink-0 rounded-full object-cover"
           />
