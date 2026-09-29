@@ -1,8 +1,12 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
+import { MemberAvatar } from '@/components/MemberAvatar.tsx';
 
 interface SuggestedUser {
   memberId: number;
   nickname: string;
+  uniqueId: string;
+  profileImage: string | null;
 }
 
 interface SuggestedUsersProps {
@@ -31,13 +35,29 @@ export function SuggestedUsers({ users }: SuggestedUsersProps) {
             const isFollowing = following.includes(user.memberId);
             return (
               <li key={user.memberId} className="flex items-center gap-3">
-                <span className="flex size-8 items-center justify-center rounded-full bg-linkup-soft text-xs font-semibold text-linkup">
-                  {user.nickname.slice(0, 1)}
-                </span>
-                <div className="min-w-0 flex-1">
+                <Link
+                  to={`/members/${user.memberId}`}
+                  state={{
+                    name: user.nickname,
+                    uniqueId: user.uniqueId,
+                    profileImage: user.profileImage,
+                  }}
+                  aria-label={`${user.nickname} 프로필`}
+                >
+                  <MemberAvatar name={user.nickname} imageUrl={user.profileImage} size="sm" />
+                </Link>
+                <Link
+                  to={`/members/${user.memberId}`}
+                  state={{
+                    name: user.nickname,
+                    uniqueId: user.uniqueId,
+                    profileImage: user.profileImage,
+                  }}
+                  className="min-w-0 flex-1 hover:text-linkup"
+                >
                   <p className="truncate text-sm font-medium text-zinc-800">{user.nickname}</p>
-                  <p className="truncate text-xs text-zinc-400">@{user.memberId}</p>
-                </div>
+                  <p className="truncate text-xs text-zinc-400">@{user.uniqueId}</p>
+                </Link>
                 <button
                   type="button"
                   onClick={() => toggleFollow(user.memberId)}

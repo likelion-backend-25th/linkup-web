@@ -1,26 +1,28 @@
 import { useEffect, useMemo, useRef, type RefObject } from 'react';
 import { PostCard } from '@/components/PostCard.tsx';
-import { useFollowingFeed } from '@/hooks/useFollowingFeed.ts';
+import { useFollowingFeed, type FeedType } from '@/hooks/useFollowingFeed.ts';
 import type { PostFeedItem } from '@/types/feed.ts';
 
 interface FollowingFeedListProps {
   enabled: boolean;
+  feedType?: FeedType;
   query: string;
   scrollRoot: RefObject<HTMLDivElement | null>;
-  onPostsChange: (posts: PostFeedItem[]) => void;
+  onPostsChange?: (posts: PostFeedItem[]) => void;
 }
 
 export function FollowingFeedList({
   enabled,
+  feedType = 'following',
   query,
   scrollRoot,
   onPostsChange,
 }: FollowingFeedListProps) {
-  const { posts, hasNext, loading, error, loadMore } = useFollowingFeed(enabled);
+  const { posts, hasNext, loading, error, loadMore } = useFollowingFeed(enabled, feedType);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    onPostsChange(posts);
+    onPostsChange?.(posts);
   }, [onPostsChange, posts]);
 
   useEffect(() => {
