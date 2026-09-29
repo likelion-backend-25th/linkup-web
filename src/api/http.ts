@@ -44,7 +44,8 @@ export async function fetchApiJson(
   options: FetchApiOptions = {},
 ): Promise<unknown> {
   const headers = new Headers(options.headers);
-  if (options.body !== undefined) {
+  const formBody = options.body instanceof FormData ? options.body : null;
+  if (options.body !== undefined && formBody === null) {
     headers.set('Content-Type', 'application/json');
   }
   if (options.accessToken) {
@@ -54,7 +55,9 @@ export async function fetchApiJson(
   const response = await fetch(toApiUrl(url), {
     method: options.method ?? 'GET',
     headers,
-    body: options.body === undefined ? undefined : JSON.stringify(options.body),
+    body:
+      formBody ??
+      (options.body === undefined ? undefined : JSON.stringify(options.body)),
     signal: options.signal,
   });
 

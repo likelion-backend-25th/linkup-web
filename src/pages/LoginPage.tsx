@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Navigate, useNavigate } from 'react-router';
-import { fetchMyProfile, loginRequest } from '@/api/auth.ts';
+import { loginByEmail } from '@/api/auth.ts';
 import { toErrorMessage } from '@/api/http.ts';
 import { LinkUpSideNav } from '@/components/LinkUpSideNav.tsx';
 import { LoginIntroPanel } from '@/components/LoginIntroPanel.tsx';
@@ -31,9 +31,8 @@ export function LoginPage() {
   async function onSubmit(values: LoginFormValues) {
     setSubmitError(null);
     try {
-      const tokens = await loginRequest(values);
-      const profile = await fetchMyProfile(tokens.accessToken);
-      setSession(tokens, profile);
+      const session = await loginByEmail(values.email);
+      setSession(session.tokens, session.profile);
       await navigate('/');
     } catch (caught: unknown) {
       setSubmitError(toErrorMessage(caught));
@@ -73,18 +72,6 @@ export function LoginPage() {
               {...register('email')}
             />
             {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
-            <label className="sr-only" htmlFor="password">
-              비밀번호
-            </label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              placeholder="비밀번호"
-              className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm text-zinc-900 outline-none focus:border-linkup focus:bg-white"
-              {...register('password')}
-            />
-            {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
             {submitError && <p className="text-sm text-red-500">{submitError}</p>}
             <button
               type="submit"
