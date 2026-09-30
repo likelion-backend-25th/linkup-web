@@ -2,12 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { SubscriptionCard } from '@/components/SubscriptionCard.tsx';
 import { SubscriptionDetailDialog } from '@/components/SubscriptionDetailDialog.tsx';
 import type { SubscriptionDisplayStatus } from '@/components/SubscriptionStatusBadge.tsx';
+import { useRequiredAccessToken } from '@/hooks/useRequiredAccessToken.ts';
 import { useSubscriptions } from '@/hooks/useSubscriptions.ts';
-import { useAuthStore } from '@/stores/useAuthStore.ts';
 import type { SubscribeCreatorListResponse } from '@/types/subscription.ts';
-
-// TODO: 로그인 API 완성 후 제거하고 비로그인 시 /login 으로 리다이렉트한다.
-const FALLBACK_MEMBER_ID = 1;
 
 // 목록 응답엔 종료일이 없어, 해지(CANCELLED)는 '종료 예정'으로 표시한다. 정확한 만료일은 상세 팝업에서 확인.
 function toDisplayStatus(item: SubscribeCreatorListResponse): SubscriptionDisplayStatus {
@@ -21,12 +18,9 @@ function toDisplayStatus(item: SubscribeCreatorListResponse): SubscriptionDispla
 }
 
 export function SubscriptionsPage() {
-  const memberId = useAuthStore((state) => state.profile?.id ?? FALLBACK_MEMBER_ID);
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const { subscriptions, totalCount, hasNext, loading, error, loadMore } = useSubscriptions(
-    memberId,
-    accessToken,
-  );
+  const accessToken = useRequiredAccessToken();
+  const { subscriptions, totalCount, hasNext, loading, error, loadMore } =
+    useSubscriptions(accessToken);
   const scrollRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [detailId, setDetailId] = useState<number | null>(null);
@@ -107,7 +101,6 @@ export function SubscriptionsPage() {
         <SubscriptionDetailDialog
           key={detailId}
           subscriptionId={detailId}
-          memberId={memberId}
           accessToken={accessToken}
           onClose={closeDetail}
         />

@@ -65,8 +65,7 @@ function isSubscriptionDetail(value: unknown): value is SubscriptionDetailRespon
 }
 
 export async function fetchSubscriptions(
-  memberId: number,
-  accessToken: string | null,
+  accessToken: string,
   cursor: number | null,
   size: number,
   signal?: AbortSignal,
@@ -76,10 +75,9 @@ export async function fetchSubscriptions(
     params.set('cursor', String(cursor));
   }
 
-  // 서버가 X-Member-Id 헤더로 로그인 회원을 식별한다.
+  // 서버가 Bearer 토큰으로 로그인 회원을 식별한다.
   const data = await fetchApiJson(`/api/v1/subscriptions?${params.toString()}`, {
     accessToken,
-    headers: { 'X-Member-Id': String(memberId) },
     signal,
   });
   if (!isPagingSubListResponse(data)) {
@@ -100,13 +98,11 @@ export async function fetchSubscriptions(
 
 export async function fetchSubscriptionDetail(
   subscriptionId: number,
-  memberId: number,
-  accessToken: string | null,
+  accessToken: string,
   signal?: AbortSignal,
 ): Promise<SubscriptionDetailResponse> {
   const data = await fetchApiJson(`/api/v1/subscriptions/${subscriptionId}`, {
     accessToken,
-    headers: { 'X-Member-Id': String(memberId) },
     signal,
   });
   if (!isSubscriptionDetail(data)) {
