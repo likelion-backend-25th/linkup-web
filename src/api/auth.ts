@@ -33,6 +33,27 @@ function isMemberProfile(value: unknown): value is MemberProfileResponse {
   );
 }
 
+interface OAuthMemberResponse {
+  id: number;
+  email: string;
+  name: string;
+  uniqueId: string;
+  profileImage: string | null;
+}
+
+function isOAuthMemberResponse(value: unknown): value is OAuthMemberResponse {
+  if (!isRecord(value)) {
+    return false;
+  }
+  return (
+    typeof value.id === 'number' &&
+    typeof value.email === 'string' &&
+    typeof value.name === 'string' &&
+    typeof value.uniqueId === 'string' &&
+    (value.profileImage === null || typeof value.profileImage === 'string')
+  );
+}
+
 export async function loginRequest(payload: LoginRequest): Promise<TokenResponse> {
   const data = await fetchApiJson('/api/v1/auth/login', {
     method: 'POST',
@@ -109,9 +130,19 @@ export async function fetchMyProfile(
   accessToken: string,
   signal?: AbortSignal,
 ): Promise<MemberProfileResponse> {
-  const data = await fetchApiJson('/api/v1/members/me', { accessToken, signal });
-  if (!isMemberProfile(data)) {
+  const data = await fetchApiJson('/api/v1/member/me', { accessToken, signal });
+  if (isMemberProfile(data)) {
+    return data;
+  }
+  if (!isOAuthMemberResponse(data)) {
     throw new Error('프로필 응답 형식이 올바르지 않습니다.');
   }
-  return data;
+  return {
+    id: data.id,
+    email: data.email,
+    nickname: data.name,
+    profileImage: data.profileImage,
+    role: 'ROLE_USER',
+    createdAt: '',
+  };
 }

@@ -1,3 +1,5 @@
+import { useAuthStore } from '@/stores/useAuthStore.ts';
+
 export interface ApiErrorBody {
   message: string;
 }
@@ -48,8 +50,11 @@ export async function fetchApiJson(
   if (options.body !== undefined && formBody === null) {
     headers.set('Content-Type', 'application/json');
   }
-  if (options.accessToken) {
-    headers.set('Authorization', `Bearer ${options.accessToken}`);
+  const storedToken = useAuthStore.getState().accessToken;
+  const accessToken = options.accessToken ?? storedToken;
+  // 임시 이메일 토큰은 JWT가 아니므로 백엔드 인증 헤더에 넣지 않는다.
+  if (accessToken?.split('.').length === 3) {
+    headers.set('Authorization', `Bearer ${accessToken}`);
   }
 
   const response = await fetch(toApiUrl(url), {
@@ -58,6 +63,7 @@ export async function fetchApiJson(
     body:
       formBody ??
       (options.body === undefined ? undefined : JSON.stringify(options.body)),
+    credentials: 'include',
     signal: options.signal,
   });
 
