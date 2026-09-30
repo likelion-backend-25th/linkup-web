@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { fetchFollowingFeed, fetchSubscriptionFeed } from '@/api/feed.ts';
+import { fetchFollowingFeed, fetchPopularFeed, fetchSubscriptionFeed } from '@/api/feed.ts';
 import { isAbortError, toErrorMessage } from '@/api/http.ts';
 import type { PostFeedItem } from '@/types/feed.ts';
 
 const PAGE_SIZE = 10;
 
-export type FeedType = 'following' | 'subscription';
+export type FeedType = 'following' | 'subscription' | 'popular';
 
 export function useFollowingFeed(enabled: boolean, feedType: FeedType = 'following') {
   const [posts, setPosts] = useState<PostFeedItem[]>([]);
@@ -26,7 +26,12 @@ export function useFollowingFeed(enabled: boolean, feedType: FeedType = 'followi
     setLoading(true);
     setError(null);
     try {
-      const fetchFeed = feedType === 'subscription' ? fetchSubscriptionFeed : fetchFollowingFeed;
+      const fetchFeed =
+        feedType === 'subscription'
+          ? fetchSubscriptionFeed
+          : feedType === 'popular'
+            ? fetchPopularFeed
+            : fetchFollowingFeed;
       const page = await fetchFeed(cursorRef.current, PAGE_SIZE, signal);
       setPosts((current) => [...current, ...page.posts]);
       cursorRef.current = page.nextCursor;

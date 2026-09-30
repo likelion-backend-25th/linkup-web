@@ -24,6 +24,10 @@ export function toErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : '알 수 없는 오류';
 }
 
+export function isHttpStatusError(error: unknown, status: number): boolean {
+  return error instanceof Error && error.message.endsWith(`(${status})`);
+}
+
 export function isAbortError(error: unknown): boolean {
   return error instanceof DOMException && error.name === 'AbortError';
 }

@@ -8,7 +8,7 @@ import {
   setReplyLike,
   updateReply,
 } from '@/api/replies.ts';
-import { isAbortError, toErrorMessage } from '@/api/http.ts';
+import { isAbortError, isHttpStatusError, toErrorMessage } from '@/api/http.ts';
 import { ActionMenu } from '@/components/ActionMenu.tsx';
 import { ConfirmDialog } from '@/components/ConfirmDialog.tsx';
 import { MemberAvatar } from '@/components/MemberAvatar.tsx';
@@ -20,6 +20,7 @@ interface PostReplySectionProps {
   postAuthorId: number;
   viewerId: number | null;
   accessToken: string | null;
+  subscriberOnly?: boolean;
   onCount: (count: number) => void;
   onReport: (replyId: number) => void;
 }
@@ -28,11 +29,29 @@ function loginMessage() {
   return '로그인 후 이용할 수 있습니다.';
 }
 
+function toReplyErrorMessage(
+  error: unknown,
+  accessToken: string | null,
+  subscriberOnly: boolean,
+): string {
+  if (isHttpStatusError(error, 401) || isHttpStatusError(error, 403)) {
+    if (!accessToken) {
+      return '로그인 후 댓글을 볼 수 있습니다.';
+    }
+    if (subscriberOnly) {
+      return '구독자 전용 게시글은 구독 후 댓글을 볼 수 있습니다.';
+    }
+    return '댓글을 볼 권한이 없습니다.';
+  }
+  return toErrorMessage(error);
+}
+
 export function PostReplySection({
   postId,
   postAuthorId,
   viewerId,
   accessToken,
+  subscriberOnly = false,
   onCount,
   onReport,
 }: PostReplySectionProps) {
@@ -43,7 +62,6 @@ export function PostReplySection({
   const [draft, setDraft] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingText, setEditingText] = useState('');
-  const [likedIds, setLikedIds] = useState<Record<number, boolean>>({});
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -52,7 +70,7 @@ export function PostReplySection({
 
     async function load() {
       try {
-        const page = await fetchReplies(postId, null, controller.signal);
+        const page = await fetchReplies(postId, null, controller.signal, accessToken);
         setReplies(page.replies);
         setCursor(page.nextCursor);
         setHasNext(page.hasNext);
@@ -61,16 +79,16 @@ export function PostReplySection({
         if (isAbortError(caught)) {
           return;
         }
-        setError(toErrorMessage(caught));
+        setError(toReplyErrorMessage(caught, accessToken, subscriberOnly));
       }
     }
 
     void load();
     return () => controller.abort();
-  }, [onCount, postId]);
+  }, [accessToken, onCount, postId, subscriberOnly]);
 
   async function reload() {
-    const page = await fetchReplies(postId, null);
+    const page = await fetchReplies(postId, null, undefined, accessToken);
     setReplies(page.replies);
     setCursor(page.nextCursor);
     setHasNext(page.hasNext);
@@ -81,7 +99,7 @@ export function PostReplySection({
     if (!hasNext) {
       return;
     }
-    const page = await fetchReplies(postId, cursor);
+    const page = await fetchReplies(postId, cursor, undefined, accessToken);
     const next = [...replies, ...page.replies];
     setReplies(next);
     setCursor(page.nextCursor);
@@ -145,14 +163,17 @@ export function PostReplySection({
       setError(loginMessage());
       return;
     }
-    const nextLiked = !likedIds[reply.id];
+    const nextLiked = !reply.likedByMe;
     try {
       await setReplyLike(postId, reply.id, nextLiked, accessToken);
-      setLikedIds((current) => ({ ...current, [reply.id]: nextLiked }));
       setReplies((current) =>
         current.map((item) =>
           item.id === reply.id
-            ? { ...item, likeCount: item.likeCount + (nextLiked ? 1 : -1) }
+            ? {
+                ...item,
+                likedByMe: nextLiked,
+                likeCount: item.likeCount + (nextLiked ? 1 : -1),
+              }
             : item,
         ),
       );
@@ -249,7 +270,7 @@ export function PostReplySection({
                   className="mt-1 inline-flex items-center gap-1 text-xs text-zinc-400"
                 >
                   <Heart
-                    className={likedIds[reply.id] ? 'size-3.5 fill-linkup text-linkup' : 'size-3.5'}
+                    className={reply.likedByMe ? 'size-3.5 fill-linkup text-linkup' : 'size-3.5'}
                     aria-hidden
                   />
                   {reply.likeCount}

@@ -10,8 +10,7 @@ import type { SubscriptionDetailResponse } from '@/types/subscription.ts';
 
 interface SubscriptionDetailDialogProps {
   subscriptionId: number;
-  memberId: number;
-  accessToken: string | null;
+  accessToken: string;
   onClose: () => void;
 }
 
@@ -58,7 +57,6 @@ function countSubscribedMonths(detail: SubscriptionDetailResponse): number {
 
 export function SubscriptionDetailDialog({
   subscriptionId,
-  memberId,
   accessToken,
   onClose,
 }: SubscriptionDetailDialogProps) {
@@ -66,7 +64,7 @@ export function SubscriptionDetailDialog({
 
   useEffect(() => {
     const controller = new AbortController();
-    fetchSubscriptionDetail(subscriptionId, memberId, accessToken, controller.signal)
+    fetchSubscriptionDetail(subscriptionId, accessToken, controller.signal)
       .then((detail) => setState({ kind: 'success', detail }))
       .catch((caught: unknown) => {
         if (!isAbortError(caught)) {
@@ -74,7 +72,7 @@ export function SubscriptionDetailDialog({
         }
       });
     return () => controller.abort();
-  }, [subscriptionId, memberId, accessToken]);
+  }, [subscriptionId, accessToken]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

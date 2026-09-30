@@ -5,6 +5,23 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
+function likedByMeOf(value: {
+  likedByMe?: unknown;
+  isLiked?: unknown;
+  liked?: unknown;
+}): boolean {
+  if (typeof value.likedByMe === 'boolean') {
+    return value.likedByMe;
+  }
+  if (typeof value.isLiked === 'boolean') {
+    return value.isLiked;
+  }
+  if (typeof value.liked === 'boolean') {
+    return value.liked;
+  }
+  return false;
+}
+
 function isReply(value: unknown): value is ReplyResponse {
   if (!isRecord(value)) {
     return false;
@@ -21,6 +38,13 @@ function isReply(value: unknown): value is ReplyResponse {
     typeof value.createdAt === 'string' &&
     typeof value.updatedAt === 'string'
   );
+}
+
+function toReply(value: ReplyResponse): ReplyResponse {
+  return {
+    ...value,
+    likedByMe: likedByMeOf(value),
+  };
 }
 
 function isReplyPage(value: unknown): value is ReplyPageResponse {
@@ -40,6 +64,7 @@ export async function fetchReplies(
   postId: number,
   cursor: number | null,
   signal?: AbortSignal,
+  accessToken?: string | null,
 ): Promise<ReplyPageResponse> {
   const params = new URLSearchParams({ size: '10' });
   if (cursor !== null) {
@@ -48,11 +73,15 @@ export async function fetchReplies(
 
   const data = await fetchApiJson(`/api/v1/posts/${postId}/replies?${params.toString()}`, {
     signal,
+    accessToken,
   });
   if (!isReplyPage(data)) {
     throw new Error('댓글 응답 형식이 올바르지 않습니다.');
   }
-  return data;
+  return {
+    ...data,
+    replies: data.replies.map(toReply),
+  };
 }
 
 export async function createReply(

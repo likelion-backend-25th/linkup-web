@@ -5,7 +5,7 @@ import type { SubscribeCreatorListResponse } from '@/types/subscription.ts';
 
 const PAGE_SIZE = 9;
 
-export function useSubscriptions(memberId: number, accessToken: string | null) {
+export function useSubscriptions(accessToken: string) {
   const [subscriptions, setSubscriptions] = useState<SubscribeCreatorListResponse[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [hasNext, setHasNext] = useState(true);
@@ -26,13 +26,7 @@ export function useSubscriptions(memberId: number, accessToken: string | null) {
       setLoading(true);
       setError(null);
       try {
-        const page = await fetchSubscriptions(
-          memberId,
-          accessToken,
-          cursorRef.current,
-          PAGE_SIZE,
-          signal,
-        );
+        const page = await fetchSubscriptions(accessToken, cursorRef.current, PAGE_SIZE, signal);
         // 첫 페이지(cursor 없음)는 기존 목록을 교체한다.
         const isFirstPage = cursorRef.current === null;
         setSubscriptions((current) =>
@@ -53,7 +47,7 @@ export function useSubscriptions(memberId: number, accessToken: string | null) {
         setLoading(false);
       }
     },
-    [memberId, accessToken],
+    [accessToken],
   );
 
   useEffect(() => {

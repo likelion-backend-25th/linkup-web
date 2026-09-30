@@ -1,5 +1,6 @@
 import { fetchApiJson } from '@/api/http.ts';
 import type { LoginRequest, MemberProfileResponse, TokenResponse } from '@/types/auth.ts';
+import { isCreatorAccount, roleFromAccessToken } from '@/utils/authRole.ts';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -18,40 +19,28 @@ function isTokenResponse(value: unknown): value is TokenResponse {
   );
 }
 
-function isMemberProfile(value: unknown): value is MemberProfileResponse {
-  if (!isRecord(value)) {
-    return false;
-  }
-
-  return (
-    typeof value.id === 'number' &&
-    typeof value.email === 'string' &&
-    typeof value.nickname === 'string' &&
-    (value.profileImage === null || typeof value.profileImage === 'string') &&
-    typeof value.role === 'string' &&
-    typeof value.createdAt === 'string'
-  );
+function asString(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() !== '' ? value : null;
 }
 
-interface OAuthMemberResponse {
-  id: number;
-  email: string;
-  name: string;
-  uniqueId: string;
-  profileImage: string | null;
-}
+function resolveRole(
+  data: Record<string, unknown>,
+  accessToken: string,
+): { role: string; creatorStatus: string | null; isCreator: boolean | null } {
+  const creatorStatus = asString(data.creatorStatus);
+  const isCreatorFlag = typeof data.isCreator === 'boolean' ? data.isCreator : null;
+  const apiRole = asString(data.role) ?? roleFromAccessToken(accessToken) ?? 'ROLE_USER';
+  const role = isCreatorAccount({
+    role: apiRole,
+    creatorStatus,
+    isCreator: isCreatorFlag,
+  })
+    ? apiRole.toUpperCase().includes('CREATOR')
+      ? apiRole
+      : 'ROLE_CREATOR'
+    : apiRole;
 
-function isOAuthMemberResponse(value: unknown): value is OAuthMemberResponse {
-  if (!isRecord(value)) {
-    return false;
-  }
-  return (
-    typeof value.id === 'number' &&
-    typeof value.email === 'string' &&
-    typeof value.name === 'string' &&
-    typeof value.uniqueId === 'string' &&
-    (value.profileImage === null || typeof value.profileImage === 'string')
-  );
+  return { role, creatorStatus, isCreator: isCreatorFlag };
 }
 
 export async function loginRequest(payload: LoginRequest): Promise<TokenResponse> {
@@ -119,6 +108,7 @@ export async function loginByEmail(email: string): Promise<{
       id: member.id,
       email: email.trim(),
       nickname: member.name,
+      uniqueId: member.uniqueId,
       profileImage: member.profileImage,
       role: 'ROLE_USER',
       createdAt: '',
@@ -131,18 +121,31 @@ export async function fetchMyProfile(
   signal?: AbortSignal,
 ): Promise<MemberProfileResponse> {
   const data = await fetchApiJson('/api/v1/member/me', { accessToken, signal });
-  if (isMemberProfile(data)) {
-    return data;
-  }
-  if (!isOAuthMemberResponse(data)) {
+  if (!isRecord(data)) {
     throw new Error('프로필 응답 형식이 올바르지 않습니다.');
   }
+
+  const id = typeof data.id === 'number' ? data.id : null;
+  const email = asString(data.email);
+  const nickname = asString(data.nickname) ?? asString(data.name);
+  if (id === null || email === null || nickname === null) {
+    throw new Error('프로필 응답 형식이 올바르지 않습니다.');
+  }
+
+  const { role, creatorStatus, isCreator } = resolveRole(data, accessToken);
   return {
-    id: data.id,
-    email: data.email,
-    nickname: data.name,
-    profileImage: data.profileImage,
-    role: 'ROLE_USER',
-    createdAt: '',
+    id,
+    email,
+    nickname,
+    uniqueId:
+      asString(data.uniqueId) ??
+      asString(data.unique_id) ??
+      asString(data.userId) ??
+      asString(data.user_id),
+    profileImage: asString(data.profileImage),
+    role,
+    createdAt: asString(data.createdAt) ?? '',
+    creatorStatus,
+    isCreator,
   };
 }

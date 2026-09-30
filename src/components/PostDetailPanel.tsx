@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Download, Heart, MessageCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { fetchFollow, setFollow } from '@/api/follow.ts';
-import { isAbortError, toErrorMessage } from '@/api/http.ts';
+import { isAbortError, isHttpStatusError, toErrorMessage } from '@/api/http.ts';
 import { deletePost, reportPost, setPostLike } from '@/api/posts.ts';
 import { reportReply } from '@/api/replies.ts';
 import { ActionMenu } from '@/components/ActionMenu.tsx';
@@ -51,7 +51,7 @@ export function PostDetailPanel({
         const data = await fetchFollow(post.memberId, controller.signal);
         setFollowState(data);
       } catch (caught: unknown) {
-        if (!isAbortError(caught)) {
+        if (!isAbortError(caught) && !isHttpStatusError(caught, 401) && !isHttpStatusError(caught, 403)) {
           setNotice(toErrorMessage(caught));
         }
       }
@@ -216,6 +216,7 @@ export function PostDetailPanel({
           postAuthorId={post.memberId}
           viewerId={viewerId}
           accessToken={accessToken}
+          subscriberOnly={post.subscriberOnly}
           onCount={setReplyCount}
           onReport={(replyId) => setReportTarget({ kind: 'reply', replyId })}
         />

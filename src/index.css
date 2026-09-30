@@ -22,3 +22,27 @@ html,
 body {
   overflow: hidden;
 }
+
+.linkup-scrollbar {
+  scrollbar-color: #a99ffc transparent;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+}
+
+.linkup-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.linkup-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.linkup-scrollbar::-webkit-scrollbar-thumb {
+  border: 2px solid white;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #b9b2ff, #7869fc);
+}
+
+.linkup-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #6d5efc;
+}
