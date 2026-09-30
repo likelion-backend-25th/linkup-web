@@ -5,6 +5,23 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
+function likedByMeOf(value: {
+  likedByMe?: unknown;
+  isLiked?: unknown;
+  liked?: unknown;
+}): boolean {
+  if (typeof value.likedByMe === 'boolean') {
+    return value.likedByMe;
+  }
+  if (typeof value.isLiked === 'boolean') {
+    return value.isLiked;
+  }
+  if (typeof value.liked === 'boolean') {
+    return value.liked;
+  }
+  return false;
+}
+
 function isPostFeedItem(value: unknown): value is PostFeedItem {
   if (!isRecord(value)) {
     return false;
@@ -25,6 +42,13 @@ function isPostFeedItem(value: unknown): value is PostFeedItem {
   );
 }
 
+function toPostFeedItem(value: PostFeedItem): PostFeedItem {
+  return {
+    ...value,
+    likedByMe: likedByMeOf(value),
+  };
+}
+
 function isFollowingFeedResponse(value: unknown): value is FollowingFeedResponse {
   if (!isRecord(value)) {
     return false;
@@ -36,6 +60,13 @@ function isFollowingFeedResponse(value: unknown): value is FollowingFeedResponse
     (value.nextCursor === null || typeof value.nextCursor === 'number') &&
     typeof value.hasNext === 'boolean'
   );
+}
+
+function parseFeedResponse(data: unknown, errorMessage: string): FollowingFeedResponse {
+  if (!isFollowingFeedResponse(data)) {
+    throw new Error(errorMessage);
+  }
+  return { ...data, posts: data.posts.map(toPostFeedItem) };
 }
 
 export async function fetchFollowingFeed(
@@ -50,10 +81,7 @@ export async function fetchFollowingFeed(
 
   // 서버 매핑은 /api/v1/feeds/following (cursor, size).
   const data = await fetchApiJson(`/api/v1/feeds/following?${params.toString()}`, { signal });
-  if (!isFollowingFeedResponse(data)) {
-    throw new Error('팔로잉 피드 응답 형식이 올바르지 않습니다.');
-  }
-  return data;
+  return parseFeedResponse(data, '팔로잉 피드 응답 형식이 올바르지 않습니다.');
 }
 
 export async function fetchSubscriptionFeed(
@@ -67,10 +95,21 @@ export async function fetchSubscriptionFeed(
   }
 
   const data = await fetchApiJson(`/api/v1/feeds/subscription?${params.toString()}`, { signal });
-  if (!isFollowingFeedResponse(data)) {
-    throw new Error('구독 피드 응답 형식이 올바르지 않습니다.');
+  return parseFeedResponse(data, '구독 피드 응답 형식이 올바르지 않습니다.');
+}
+
+export async function fetchPopularFeed(
+  cursor: number | null,
+  size: number,
+  signal?: AbortSignal,
+): Promise<FollowingFeedResponse> {
+  const params = new URLSearchParams({ size: String(size) });
+  if (cursor !== null) {
+    params.set('cursor', String(cursor));
   }
-  return data;
+
+  const data = await fetchApiJson(`/api/v1/feeds/popular?${params.toString()}`, { signal });
+  return parseFeedResponse(data, '인기 피드 응답 형식이 올바르지 않습니다.');
 }
 
 export async function fetchMyPosts(subscriberOnly: boolean, signal?: AbortSignal): Promise<PostFeedItem[]> {
@@ -101,14 +140,12 @@ async function fetchPostsByPath(path: string, signal?: AbortSignal): Promise<Pos
       params.set('cursor', String(cursor));
     }
     const data = await fetchApiJson(`${path}?${params.toString()}`, { signal });
-    if (!isFollowingFeedResponse(data)) {
-      throw new Error('내 게시글 응답 형식이 올바르지 않습니다.');
-    }
-    posts.push(...data.posts);
-    if (!data.hasNext || data.nextCursor === null) {
+    const page = parseFeedResponse(data, '내 게시글 응답 형식이 올바르지 않습니다.');
+    posts.push(...page.posts);
+    if (!page.hasNext || page.nextCursor === null) {
       break;
     }
-    cursor = data.nextCursor;
+    cursor = page.nextCursor;
   }
 
   return posts;

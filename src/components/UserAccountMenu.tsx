@@ -12,9 +12,7 @@ export function UserAccountMenu() {
   const menuRef = useRef<HTMLDivElement>(null);
 
   const displayName = profile?.nickname ?? '게스트';
-  const handle = profile?.nickname
-    ? profile.nickname.replaceAll(/\s+/g, '').toLowerCase()
-    : 'guest';
+  const handle = profile?.uniqueId || 'guest';
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {

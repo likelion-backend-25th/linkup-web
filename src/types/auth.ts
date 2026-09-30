@@ -17,7 +17,10 @@ export interface MemberProfileResponse {
   id: number;
   email: string;
   nickname: string;
+  uniqueId: string | null;
   profileImage: string | null;
   role: string;
   createdAt: string;
+  creatorStatus?: string | null;
+  isCreator?: boolean | null;
 }
