@@ -53,6 +53,8 @@
         "tags": [
           "post-controller"
         ],
+        "summary": "게시글 수정",
+        "description": "게시글 ID에 해당하는 게시글을 수정합니다.",
         "operationId": "updatePost",
         "parameters": [
           {
@@ -74,6 +76,13 @@
                   "request": {
                     "$ref": "#/components/schemas/PostUpdateRequest"
                   },
+                  "newImages": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  },
                   "file": {
                     "type": "string",
                     "format": "binary"
@@ -87,8 +96,17 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "OK"
+          "204": {
+            "description": "게시글 수정 성공"
+          },
+          "400": {
+            "description": "이미지/첨부파일 검증 실패"
+          },
+          "403": {
+            "description": "게시글 수정 권한 없음 또는 구독자 전용 게시글 작성 권한 없음"
+          },
+          "404": {
+            "description": "게시글 또는 회원이 존재하지 않음"
           }
         }
       },
@@ -96,6 +114,8 @@
         "tags": [
           "post-controller"
         ],
+        "summary": "게시글 삭제",
+        "description": "게시글 ID에 해당하는 게시글을 삭제합니다.",
         "operationId": "deletePost",
         "parameters": [
           {
@@ -109,8 +129,14 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "OK"
+          "204": {
+            "description": "게시글 삭제 성공"
+          },
+          "403": {
+            "description": "게시글 삭제 권한 없음"
+          },
+          "404": {
+            "description": "게시글이 존재하지 않음"
           }
         }
       }
@@ -189,6 +215,198 @@
         }
       }
     },
+    "/api/v1/member/me": {
+      "get": {
+        "tags": [
+          "member-controller"
+        ],
+        "operationId": "getMyInfo",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "member-controller"
+        ],
+        "operationId": "updateMyProfile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "request": {
+                    "$ref": "#/components/schemas/MemberUpdateRequest"
+                  },
+                  "profileImage": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "request"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/subscriptions": {
+      "get": {
+        "tags": [
+          "subscription-controller"
+        ],
+        "summary": "사용자의 구독 리스트 조회",
+        "description": "사용자의 Auth 정보에서 ID값을 가져와 구독 리스트를 조회하여 반환한다",
+        "operationId": "getSubscribeCreatorList",
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "다음 페이징 커서 값",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "페이지 사이즈",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 9,
+              "maximum": 20,
+              "minimum": 3
+            },
+            "example": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "구독 리스트 조회 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagingSubListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "subscription-controller"
+        ],
+        "summary": "구독 등록",
+        "description": "사용자의 Auth정보와 Body 정보를 기반으로 구독을 등록한다",
+        "operationId": "createSubscription",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSubscriptionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "구독 리스트 조회 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSubscriptionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/subscriptions/{id}": {
+      "get": {
+        "tags": [
+          "subscription-controller"
+        ],
+        "summary": "구독 내역 상세 조회",
+        "description": "구독 id 값을 사용하여 구독 내역을 상세 조회 한다",
+        "operationId": "getSubscriptionDetail",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "구독 내역 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "구독 상세 내역 조회 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionDetailResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "subscription-controller"
+        ],
+        "summary": "구독 해지",
+        "description": "구독 id 값을 사용하여 구독을 해지한다",
+        "operationId": "cancelSubscription",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "구독 내역 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "구독 해지 성공"
+          }
+        }
+      }
+    },
     "/api/v1/posts": {
       "post": {
         "tags": [
@@ -227,7 +445,7 @@
           }
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "게시글 등록 성공",
             "content": {
               "application/json": {
@@ -603,6 +821,36 @@
         }
       }
     },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "tags": [
+          "token-controller"
+        ],
+        "operationId": "refreshAccessToken",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAccessTokenByRefreshToken"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessTokenResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/reports/{reportId}": {
       "get": {
         "tags": [
@@ -662,112 +910,6 @@
         "responses": {
           "200": {
             "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/v1/subscriptions": {
-      "get": {
-        "tags": [
-          "subscription-controller"
-        ],
-        "summary": "사용자의 구독 리스트 조회",
-        "description": "사용자의 Auth 정보에서 ID값을 가져와 구독 리스트를 조회하여 반환한다",
-        "operationId": "getSubscribeCreatorList",
-        "parameters": [
-          {
-            "name": "X-Member-Id",
-            "in": "header",
-            "description": "로그인 회원 ID",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            },
-            "example": 1
-          },
-          {
-            "name": "cursor",
-            "in": "query",
-            "description": "다음 페이징 커서 값",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            },
-            "example": 1
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "description": "페이지 사이즈",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 9,
-              "maximum": 20,
-              "minimum": 3
-            },
-            "example": 10
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "구독 리스트 조회 성공",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PagingSubListResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/subscriptions/{id}": {
-      "get": {
-        "tags": [
-          "subscription-controller"
-        ],
-        "summary": "구독 내역 상세 조회",
-        "description": "구독 id 값을 사용하여 구독 내역을 상세 조회 한다",
-        "operationId": "getSubscriptionDetail",
-        "parameters": [
-          {
-            "name": "X-Member-Id",
-            "in": "header",
-            "description": "로그인 회원 ID",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            },
-            "example": 1
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "description": "구독 내역 ID",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            },
-            "example": 1
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "구독 상세 내역 조회 성공",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SubscriptionDetailResponse"
-                }
-              }
-            }
           }
         }
       }
@@ -844,11 +986,214 @@
         }
       }
     },
+    "/api/v1/members/{targetId}/feeds": {
+      "get": {
+        "tags": [
+          "feed-controller"
+        ],
+        "summary": "특정 회원의 전체 공개 게시글 조회",
+        "description": "특정 회원이 등록한 전체 공개 게시글 피드를 조회합니다.",
+        "operationId": "getTargetFeed",
+        "parameters": [
+          {
+            "name": "targetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10,
+              "maximum": 20,
+              "minimum": 3
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "특정 회원 전체 공개 피드 조회 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/members/{targetId}/feeds/subscriber-only": {
+      "get": {
+        "tags": [
+          "feed-controller"
+        ],
+        "summary": "특정 회원의 구독자 전용 게시글 조회",
+        "description": "특정 회원이 등록한 구독자 전용 게시글 피드를 조회합니다.",
+        "operationId": "getTargetSubscriberOnlyFeed",
+        "parameters": [
+          {
+            "name": "targetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10,
+              "maximum": 20,
+              "minimum": 3
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "특정 회원 구독자 전용 피드 조회 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "게시글에 접근할 수 없음"
+          }
+        }
+      }
+    },
+    "/api/v1/members/me/feeds": {
+      "get": {
+        "tags": [
+          "feed-controller"
+        ],
+        "summary": "내 전체 공개 게시글 조회",
+        "description": "내가 등록한 전체 공개 게시글 피드를 조회합니다.",
+        "operationId": "getMyFeed",
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10,
+              "maximum": 20,
+              "minimum": 3
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "내 전체 공개 피드 조회 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/members/me/feeds/subscriber-only": {
+      "get": {
+        "tags": [
+          "feed-controller"
+        ],
+        "summary": "내 구독자 전용 게시글 조회",
+        "description": "내가 등록한 구독자 전용 게시글 피드를 조회합니다.",
+        "operationId": "getMySubscriberOnlyFeed",
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10,
+              "maximum": 20,
+              "minimum": 3
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "내 구독자 전용 피드 조회 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/feeds/subscription": {
       "get": {
         "tags": [
           "feed-controller"
         ],
+        "summary": "내가 구독한 회원의 피드 조회",
+        "description": "내가 구독한 회원의 피드를 무한 스크롤 형식으로 제공합니다.",
         "operationId": "getSubscriptionFeed",
         "parameters": [
           {
@@ -875,7 +1220,61 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "구독 피드 조회 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/feeds/popular": {
+      "get": {
+        "tags": [
+          "feed-controller"
+        ],
+        "summary": "게시글 좋아요 순 조회",
+        "description": "전체 공개 게시글을 좋아요 순으로 조회합니다.",
+        "operationId": "getPopularFeed",
+        "parameters": [
+          {
+            "name": "cursorLikeCount",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "cursorPostId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10,
+              "maximum": 20,
+              "minimum": 3
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "특정 회원 구독자 전용 피드 조회 성공",
             "content": {
               "application/json": {
                 "schema": {
@@ -892,6 +1291,8 @@
         "tags": [
           "feed-controller"
         ],
+        "summary": "내가 팔로우한 회원의 피드 조회",
+        "description": "내가 팔로우한 회원의 피드를 무한 스크롤 형식으로 제공합니다.",
         "operationId": "getFollowingFeed",
         "parameters": [
           {
@@ -918,7 +1319,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "팔로잉 피드 조회 성공",
             "content": {
               "application/json": {
                 "schema": {
@@ -1114,6 +1515,21 @@
   },
   "components": {
     "schemas": {
+      "PostImageUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "imageId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "유지할 기존 이미지 ID. 새 이미지인 경우 null"
+          },
+          "newImageIndex": {
+            "type": "integer",
+            "format": "int32",
+            "description": "newImages의 인덱스. 기존 이미지인 경우 null"
+          }
+        }
+      },
       "PostUpdateRequest": {
         "type": "object",
         "properties": {
@@ -1129,12 +1545,21 @@
           },
           "removeFile": {
             "type": "boolean",
-            "description": "파일 삭제 여부"
+            "description": "기존 첨부파일 삭제 여부"
+          },
+          "imageRequest": {
+            "type": "array",
+            "description": "수정 후 최종 이미지 목록",
+            "items": {
+              "$ref": "#/components/schemas/PostImageUpdateRequest"
+            },
+            "maxItems": 5,
+            "minItems": 1
           }
         },
         "required": [
           "content",
-          "subscriberOnly"
+          "imageRequest"
         ]
       },
       "ReplyUpdateRequest": {
@@ -1150,6 +1575,43 @@
         "required": [
           "content"
         ]
+      },
+      "MemberUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "introduction": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateSubscriptionRequest": {
+        "type": "object",
+        "description": "구독 등록 요청 정보",
+        "properties": {
+          "creatorId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "customerUid": {
+            "type": "string"
+          },
+          "price": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "CreateSubscriptionResponse": {
+        "type": "object",
+        "properties": {
+          "subscriptionId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
       },
       "PostCreateRequest": {
         "type": "object",
@@ -1211,6 +1673,29 @@
         "required": [
           "content"
         ]
+      },
+      "CreateAccessTokenByRefreshToken": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "example": "로그인 할때 발급 받은 리프레쉬 토큰 넣기"
+          }
+        }
+      },
+      "AccessTokenResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          },
+          "refreshToken": {
+            "type": "string"
+          }
+        }
       },
       "AdminReportProcessRequest": {
         "type": "object",
@@ -1391,6 +1876,9 @@
           "likedByMe": {
             "type": "boolean"
           },
+          "followingAuthor": {
+            "type": "boolean"
+          },
           "images": {
             "type": "array",
             "items": {
@@ -1552,6 +2040,42 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "MemberDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "uniqueId": {
+            "type": "string"
+          },
+          "profileImage": {
+            "type": "string"
+          },
+          "introduction": {
+            "type": "string"
+          },
+          "postCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "followerCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "followingCount": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
