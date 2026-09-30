@@ -1,7 +1,11 @@
+import { useState } from 'react';
 import { Heart, MessageCircle } from 'lucide-react';
 import { Link } from 'react-router';
+import { setPostLike } from '@/api/posts.ts';
+import { toErrorMessage } from '@/api/http.ts';
 import { MediaImage } from '@/components/MediaImage.tsx';
 import { MemberAvatar } from '@/components/MemberAvatar.tsx';
+import { useAuthStore } from '@/stores/useAuthStore.ts';
 import type { PostFeedItem } from '@/types/feed.ts';
 import { formatRelativeTime } from '@/utils/formatDateTime.ts';
 
@@ -10,11 +14,31 @@ interface PostCardProps {
 }
 
 export function PostCard({ post }: PostCardProps) {
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const [likedByMe, setLikedByMe] = useState(post.likedByMe);
+  const [likeCount, setLikeCount] = useState(post.likeCount);
+  const [error, setError] = useState<string | null>(null);
   const profileState = {
     name: post.memberName,
     uniqueId: post.uniqueId,
     profileImage: post.profileImageUrl,
   };
+
+  async function toggleLike() {
+    if (!accessToken) {
+      setError('로그인 후 이용할 수 있습니다.');
+      return;
+    }
+    const next = !likedByMe;
+    try {
+      await setPostLike(post.postId, next, accessToken);
+      setLikedByMe(next);
+      setLikeCount((count) => Math.max(0, count + (next ? 1 : -1)));
+      setError(null);
+    } catch (caught: unknown) {
+      setError(toErrorMessage(caught));
+    }
+  }
 
   return (
     <article className="border-b border-zinc-100 py-5 last:border-b-0">
@@ -45,21 +69,35 @@ export function PostCard({ post }: PostCardProps) {
               <MediaImage
                 src={post.mainImageUrl}
                 alt=""
-                className="mt-3 h-48 w-full rounded-xl object-cover"
+                className="mt-3 h-auto w-full rounded-xl object-contain"
               />
             ) : null}
           </Link>
 
           <div className="mt-3 flex items-center gap-4 text-xs text-zinc-400">
-            <span className="inline-flex items-center gap-1">
-              <Heart className="size-3.5" aria-hidden />
-              {post.likeCount}
-            </span>
-            <span className="inline-flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => void toggleLike()}
+              className="inline-flex items-center gap-1 hover:text-linkup"
+              aria-pressed={likedByMe}
+              aria-label="좋아요"
+            >
+              <Heart
+                className={likedByMe ? 'size-3.5 fill-linkup text-linkup' : 'size-3.5'}
+                aria-hidden
+              />
+              {likeCount}
+            </button>
+            <Link
+              to={`/posts/${post.postId}`}
+              className="inline-flex items-center gap-1 hover:text-linkup"
+              aria-label="댓글"
+            >
               <MessageCircle className="size-3.5" aria-hidden />
               {post.commentCount}
-            </span>
+            </Link>
           </div>
+          {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
         </div>
       </div>
     </article>

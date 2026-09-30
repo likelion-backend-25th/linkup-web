@@ -11,6 +11,7 @@ export interface PostFeedItem {
   commentCount: number;
   subscriberOnly: boolean;
   createdAt: string;
+  likedByMe: boolean;
 }
 
 /** GET /api/v1/feeds/following 응답 (FollowingFeedResponse) */

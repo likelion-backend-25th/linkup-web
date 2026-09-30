@@ -7,6 +7,7 @@ export interface ReplyResponse {
   profileImage: string | null;
   content: string;
   likeCount: number;
+  likedByMe: boolean;
   createdAt: string;
   updatedAt: string;
 }

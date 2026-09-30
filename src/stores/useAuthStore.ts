@@ -8,6 +8,7 @@ interface AuthState {
   tokenType: string | null;
   profile: MemberProfileResponse | null;
   setSession: (tokens: TokenResponse, profile: MemberProfileResponse | null) => void;
+  setProfile: (profile: MemberProfileResponse | null) => void;
   logout: () => void;
 }
 
@@ -25,6 +26,7 @@ export const useAuthStore = create<AuthState>()(
           tokenType: tokens.tokenType,
           profile,
         }),
+      setProfile: (profile) => set({ profile }),
       logout: () =>
         set({
           accessToken: null,

@@ -7,13 +7,13 @@ import type { PostFeedItem } from '@/types/feed.ts';
 type FeedTab = 'following' | 'subscribe' | 'popular';
 
 const tabs: { id: FeedTab; label: string }[] = [
+  { id: 'popular', label: '인기' },
   { id: 'following', label: '팔로잉' },
   { id: 'subscribe', label: '구독' },
-  { id: 'popular', label: '인기' },
 ];
 
 export function FeedPage() {
-  const [tab, setTab] = useState<FeedTab>('following');
+  const [tab, setTab] = useState<FeedTab>('popular');
   const [query, setQuery] = useState('');
   const [followingPosts, setFollowingPosts] = useState<PostFeedItem[]>([]);
   const feedScrollRef = useRef<HTMLDivElement>(null);
@@ -57,7 +57,18 @@ export function FeedPage() {
           ))}
         </div>
 
-        <div ref={feedScrollRef} className="min-h-0 flex-1 overflow-y-auto">
+        <div
+          ref={feedScrollRef}
+          className="linkup-scrollbar min-h-0 flex-1 overflow-y-auto pr-1"
+        >
+          {tab === 'popular' && (
+            <FollowingFeedList
+              enabled
+              feedType="popular"
+              query={query}
+              scrollRoot={feedScrollRef}
+            />
+          )}
           {tab === 'following' && (
             <FollowingFeedList
               enabled
@@ -74,9 +85,6 @@ export function FeedPage() {
               query={query}
               scrollRoot={feedScrollRef}
             />
-          )}
-          {tab === 'popular' && (
-            <p className="py-8 text-sm text-zinc-400">이 피드는 곧 열려요.</p>
           )}
         </div>
       </section>

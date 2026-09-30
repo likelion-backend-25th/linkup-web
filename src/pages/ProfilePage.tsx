@@ -32,6 +32,7 @@ export function ProfilePage() {
   const location = useLocation();
   const profile = useAuthStore((state) => state.profile);
   const accessToken = useAuthStore((state) => state.accessToken);
+  const setProfile = useAuthStore((state) => state.setProfile);
   const routeMemberId = Number(params.memberId);
   const isMemberProfile = Number.isInteger(routeMemberId) && routeMemberId > 0;
   const profileState = location.state as MemberProfileState | null;
@@ -45,7 +46,7 @@ export function ProfilePage() {
 
   const owner = publicPosts[0];
   const name = owner?.memberName ?? profileState?.name ?? profile?.nickname ?? '회원';
-  const uniqueId = owner?.uniqueId ?? profileState?.uniqueId ?? '';
+  const uniqueId = owner?.uniqueId ?? profileState?.uniqueId ?? profile?.uniqueId ?? '';
   const imageUrl =
     owner?.profileImageUrl ?? profileState?.profileImage ?? profile?.profileImage ?? null;
   const memberId = isMemberProfile ? routeMemberId : (owner?.memberId ?? profile?.id ?? null);
@@ -64,6 +65,11 @@ export function ProfilePage() {
         setPosts(nextPosts);
         if (tab === 'public') {
           setPublicPosts(nextPosts);
+        }
+        const postUniqueId = nextPosts[0]?.uniqueId;
+        const currentProfile = useAuthStore.getState().profile;
+        if (!isMemberProfile && postUniqueId && currentProfile && !currentProfile.uniqueId) {
+          setProfile({ ...currentProfile, uniqueId: postUniqueId });
         }
       } catch (caught: unknown) {
         if (isAbortError(caught)) {
@@ -163,18 +169,37 @@ export function ProfilePage() {
           <dt className="text-xs text-zinc-400">게시글</dt>
           <dd className="text-lg font-semibold text-zinc-900">{formatCount(publicPosts.length)}</dd>
         </div>
-        <div>
-          <dt className="text-xs text-zinc-400">팔로워</dt>
-          <dd className="text-lg font-semibold text-zinc-900">
-            {follow === null ? '-' : formatCount(follow.followerCount)}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-xs text-zinc-400">팔로잉</dt>
-          <dd className="text-lg font-semibold text-zinc-900">
-            {follow === null ? '-' : formatCount(follow.followingCount)}
-          </dd>
-        </div>
+        {memberId === null ? (
+          <>
+            <div>
+              <dt className="text-xs text-zinc-400">팔로워</dt>
+              <dd className="text-lg font-semibold text-zinc-900">
+                {follow === null ? '-' : formatCount(follow.followerCount)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-zinc-400">팔로잉</dt>
+              <dd className="text-lg font-semibold text-zinc-900">
+                {follow === null ? '-' : formatCount(follow.followingCount)}
+              </dd>
+            </div>
+          </>
+        ) : (
+          <>
+            <Link to={`/members/${memberId}/follows`} className="hover:text-linkup">
+              <dt className="text-xs text-zinc-400">팔로워</dt>
+              <dd className="text-lg font-semibold text-zinc-900">
+                {follow === null ? '-' : formatCount(follow.followerCount)}
+              </dd>
+            </Link>
+            <Link to={`/members/${memberId}/follows`} className="hover:text-linkup">
+              <dt className="text-xs text-zinc-400">팔로잉</dt>
+              <dd className="text-lg font-semibold text-zinc-900">
+                {follow === null ? '-' : formatCount(follow.followingCount)}
+              </dd>
+            </Link>
+          </>
+        )}
       </dl>
 
       {isOwnView && (

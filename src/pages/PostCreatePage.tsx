@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, ImagePlus, Pencil, Plus, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router';
 import { createPost, deletePost, fetchPost, savePostEdit } from '@/api/posts.ts';
-import { isAbortError, toErrorMessage } from '@/api/http.ts';
+import { isAbortError, isHttpStatusError, toErrorMessage } from '@/api/http.ts';
 import { ConfirmDialog } from '@/components/ConfirmDialog.tsx';
 import { ImageCropDialog } from '@/components/ImageCropDialog.tsx';
 import { MediaImage } from '@/components/MediaImage.tsx';
@@ -39,7 +39,6 @@ export function PostCreatePage() {
   const isEdit = editId !== null && Number.isInteger(editId) && editId > 0;
 
   const accessToken = useAuthStore((state) => state.accessToken);
-  const isCreator = useAuthStore((state) => state.profile?.role === 'ROLE_CREATOR');
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imagesRef = useRef<PreviewImage[]>([]);
@@ -48,6 +47,7 @@ export function PostCreatePage() {
   const [selected, setSelected] = useState(0);
   const [attachment, setAttachment] = useState<File | null>(null);
   const [existingFileUrl, setExistingFileUrl] = useState<string | null>(null);
+  const [removeExistingFile, setRemoveExistingFile] = useState(false);
   const [content, setContent] = useState('');
   const [subscriberOnly, setSubscriberOnly] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -83,6 +83,7 @@ export function PostCreatePage() {
         setContent(post.content);
         setSubscriberOnly(post.subscriberOnly);
         setExistingFileUrl(post.fileUrl);
+        setRemoveExistingFile(false);
         setImages(
           sorted.map((image) => ({
             kind: 'remote',
@@ -108,7 +109,6 @@ export function PostCreatePage() {
   }, [editId, isEdit]);
 
   const current = images[selected];
-  const canAttachFile = isCreator && subscriberOnly;
 
   function addImages(fileList: FileList | null) {
     if (!fileList) {
@@ -235,7 +235,7 @@ export function PostCreatePage() {
           return { imageId: null, newImageIndex: index };
         });
         const newImages = images.flatMap((image) => (image.kind === 'local' ? [image.file] : []));
-        const removeFile = Boolean(existingFileUrl) && attachment === null && !subscriberOnly;
+        const removeFile = removeExistingFile;
         await savePostEdit(
           editId,
           content.trim(),
@@ -243,7 +243,7 @@ export function PostCreatePage() {
           removeFile,
           imageRequest,
           newImages,
-          canAttachFile ? attachment : null,
+          attachment,
           accessToken,
         );
         await navigate(`/posts/${editId}`);
@@ -254,12 +254,17 @@ export function PostCreatePage() {
         content.trim(),
         subscriberOnly,
         images.flatMap((image) => (image.kind === 'local' ? [image.file] : [])),
-        canAttachFile ? attachment : null,
+        attachment,
         accessToken,
       );
       await navigate(`/posts/${id}`);
     } catch (caught: unknown) {
-      setError(toErrorMessage(caught));
+      const usedCreatorFeature = subscriberOnly || attachment !== null;
+      setError(
+        usedCreatorFeature && isHttpStatusError(caught, 403)
+          ? '파일 업로드와 구독자 전용 등록은 크리에이터만 할 수 있습니다.'
+          : toErrorMessage(caught),
+      );
       setPending(false);
     }
   }
@@ -391,14 +396,23 @@ export function PostCreatePage() {
         </button>
         <button
           type="button"
-          disabled={!canAttachFile}
           onClick={() => fileInputRef.current?.click()}
-          className="rounded-xl border border-zinc-200 px-3 py-2 text-sm text-zinc-600 disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-xl border border-zinc-200 px-3 py-2 text-sm text-zinc-600"
         >
           {attachment ? attachment.name : existingFileUrl ? '기존 첨부 파일' : '파일 업로드'}
         </button>
-        {!canAttachFile && (
-          <p className="text-xs text-zinc-400">크리에이터의 구독자 전용 글만 파일을 올릴 수 있어요.</p>
+        {(attachment || existingFileUrl) && (
+          <button
+            type="button"
+            onClick={() => {
+              setAttachment(null);
+              setExistingFileUrl(null);
+              setRemoveExistingFile(true);
+            }}
+            className="rounded-xl border border-zinc-200 px-3 py-2 text-sm text-zinc-500"
+          >
+            파일 삭제
+          </button>
         )}
       </div>
 
@@ -419,6 +433,7 @@ export function PostCreatePage() {
         className="hidden"
         onChange={(event) => {
           setAttachment(event.target.files?.[0] ?? null);
+          setRemoveExistingFile(false);
           event.target.value = '';
         }}
       />
@@ -442,10 +457,7 @@ export function PostCreatePage() {
         <div className="mt-2 grid gap-2 sm:grid-cols-2">
           <button
             type="button"
-            onClick={() => {
-              setSubscriberOnly(false);
-              setAttachment(null);
-            }}
+            onClick={() => setSubscriberOnly(false)}
             className={
               subscriberOnly
                 ? 'rounded-2xl border border-zinc-200 px-4 py-3 text-left'
@@ -457,12 +469,11 @@ export function PostCreatePage() {
           </button>
           <button
             type="button"
-            disabled={!isCreator && !subscriberOnly}
             onClick={() => setSubscriberOnly(true)}
             className={
               subscriberOnly
-                ? 'rounded-2xl border border-linkup bg-linkup-soft px-4 py-3 text-left disabled:opacity-40'
-                : 'rounded-2xl border border-zinc-200 px-4 py-3 text-left disabled:opacity-40'
+                ? 'rounded-2xl border border-linkup bg-linkup-soft px-4 py-3 text-left'
+                : 'rounded-2xl border border-zinc-200 px-4 py-3 text-left'
             }
           >
             <span className="block text-sm font-semibold text-zinc-900">구독자 전용</span>

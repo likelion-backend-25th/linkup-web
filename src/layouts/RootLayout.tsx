@@ -1,7 +1,24 @@
+import { useEffect } from 'react';
 import { Outlet } from 'react-router';
+import { fetchMyProfile } from '@/api/auth.ts';
 import { LinkUpSideNav } from '@/components/LinkUpSideNav.tsx';
+import { useAuthStore } from '@/stores/useAuthStore.ts';
 
 export function RootLayout() {
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const setProfile = useAuthStore((state) => state.setProfile);
+
+  useEffect(() => {
+    if (!accessToken) {
+      return;
+    }
+    const controller = new AbortController();
+    void fetchMyProfile(accessToken, controller.signal)
+      .then(setProfile)
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, [accessToken, setProfile]);
+
   return (
     <div className="h-svh overflow-hidden bg-canvas p-4 md:p-6">
       <div className="mx-auto flex h-full max-w-6xl flex-col gap-4 lg:flex-row">
