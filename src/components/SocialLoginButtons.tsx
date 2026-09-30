@@ -1,4 +1,5 @@
-const oauthBase = '/oauth2/authorization';
+const oauthOrigin = (import.meta.env.VITE_OAUTH_ORIGIN ?? '').replace(/\/$/, '');
+const oauthBase = `${oauthOrigin}/oauth2/authorization`;
 
 export function SocialLoginButtons() {
   return (

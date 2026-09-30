@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Heart } from 'lucide-react';
+import { Link } from 'react-router';
 import {
   createReply,
   deleteReply,
@@ -191,16 +192,34 @@ export function PostReplySection({
         <ul className="flex flex-col gap-4 py-2">
           {replies.map((reply) => (
             <li key={reply.id} className="flex gap-2">
-              <MemberAvatar name={reply.name} imageUrl={reply.profileImage} size="sm" />
+              <Link
+                to={`/members/${reply.memberId}`}
+                state={{
+                  name: reply.name,
+                  uniqueId: reply.uniqueId,
+                  profileImage: reply.profileImage,
+                }}
+                aria-label={`${reply.name} 프로필`}
+              >
+                <MemberAvatar name={reply.name} imageUrl={reply.profileImage} size="sm" />
+              </Link>
               <div className="min-w-0 flex-1">
                 <div className="flex items-start gap-2">
-                  <p className="min-w-0 text-sm">
+                  <Link
+                    to={`/members/${reply.memberId}`}
+                    state={{
+                      name: reply.name,
+                      uniqueId: reply.uniqueId,
+                      profileImage: reply.profileImage,
+                    }}
+                    className="min-w-0 text-sm hover:text-linkup"
+                  >
                     <span className="font-semibold text-zinc-900">{reply.name}</span>
                     <span className="ml-1 text-zinc-400">@{reply.uniqueId}</span>
                     <span className="ml-1 text-xs text-zinc-400">
                       {formatRelativeTime(reply.createdAt)}
                     </span>
-                  </p>
+                  </Link>
                   <ActionMenu
                     label="댓글 메뉴"
                     items={replyActions(reply)}

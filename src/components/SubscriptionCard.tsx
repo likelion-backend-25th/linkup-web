@@ -17,29 +17,40 @@ export function SubscriptionCard({
   displayStatus,
   onOpenDetail,
 }: SubscriptionCardProps) {
-  const profilePath = `/profile/${subscription.creatorId}`;
+  const profilePath = `/members/${subscription.creatorId}`;
+  const profileState = {
+    name: subscription.creatorName,
+    uniqueId: subscription.creatorUniqueId,
+    profileImage: subscription.profileImage,
+    introduction: subscription.introduction,
+  };
 
   return (
     <article className="flex flex-col overflow-hidden rounded-2xl border border-zinc-100 bg-white">
       <div className="relative h-24 bg-linkup-soft">
         <SubscriptionStatusBadge status={displayStatus} className="absolute right-3 top-3" />
-        <Link to={profilePath} className="absolute -bottom-7 left-5">
+        <Link to={profilePath} state={profileState} className="absolute -bottom-7 left-5">
           {subscription.profileImage ? (
             <img
               src={toMediaUrl(subscription.profileImage)}
               alt=""
+              onError={(event) => {
+                event.currentTarget.src = '/default-avatar.svg';
+              }}
               className="size-14 rounded-full border-4 border-white object-cover"
             />
           ) : (
-            <span className="flex size-14 items-center justify-center rounded-full border-4 border-white bg-white text-lg font-semibold text-linkup">
-              {subscription.creatorName.slice(0, 1)}
-            </span>
+            <img
+              src="/default-avatar.svg"
+              alt={`${subscription.creatorName} 기본 프로필`}
+              className="size-14 rounded-full border-4 border-white object-cover"
+            />
           )}
         </Link>
       </div>
 
       <div className="flex flex-1 flex-col px-5 pb-5 pt-9">
-        <Link to={profilePath} className="flex min-w-0 items-center gap-2 text-sm">
+        <Link to={profilePath} state={profileState} className="flex min-w-0 items-center gap-2 text-sm">
           <span className="truncate font-semibold text-zinc-900">{subscription.creatorName}</span>
           <span className="truncate text-zinc-400">@{subscription.creatorUniqueId}</span>
         </Link>
