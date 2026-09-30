@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Download, Heart, MessageCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
-import { fetchFollow, setFollow } from '@/api/follow.ts';
-import { isAbortError, isHttpStatusError, toErrorMessage } from '@/api/http.ts';
+import { toErrorMessage } from '@/api/http.ts';
 import { deletePost, reportPost, setPostLike } from '@/api/posts.ts';
 import { reportReply } from '@/api/replies.ts';
 import { ActionMenu } from '@/components/ActionMenu.tsx';
@@ -10,7 +9,7 @@ import { ConfirmDialog } from '@/components/ConfirmDialog.tsx';
 import { MemberAvatar } from '@/components/MemberAvatar.tsx';
 import { PostReplySection } from '@/components/PostReplySection.tsx';
 import { ReportDialog } from '@/components/ReportDialog.tsx';
-import type { FollowResponse } from '@/types/follow.ts';
+import { useLoginPromptStore } from '@/stores/useLoginPromptStore.ts';
 import type { PostDetailResponse } from '@/types/post.ts';
 import { formatRelativeTime } from '@/utils/formatDateTime.ts';
 import { toMediaUrl } from '@/utils/mediaUrl.ts';
@@ -36,34 +35,15 @@ export function PostDetailPanel({
 }: PostDetailPanelProps) {
   const navigate = useNavigate();
   const isOwner = viewerId === post.memberId;
-  const [follow, setFollowState] = useState<FollowResponse | null>(null);
   const [replyCount, setReplyCount] = useState(0);
   const [notice, setNotice] = useState<string | null>(null);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    async function loadFollow() {
-      try {
-        const data = await fetchFollow(post.memberId, controller.signal);
-        setFollowState(data);
-      } catch (caught: unknown) {
-        if (!isAbortError(caught) && !isHttpStatusError(caught, 401) && !isHttpStatusError(caught, 403)) {
-          setNotice(toErrorMessage(caught));
-        }
-      }
-    }
-
-    void loadFollow();
-    return () => controller.abort();
-  }, [post.memberId]);
+  const promptIfLoggedOut = useLoginPromptStore((state) => state.promptIfLoggedOut);
 
   async function toggleLike() {
-    if (!accessToken) {
-      setNotice(loginMessage());
+    if (promptIfLoggedOut() || !accessToken) {
       return;
     }
     const next = !post.likedByMe;
@@ -73,24 +53,6 @@ export function PostDetailPanel({
         ...post,
         likedByMe: next,
         likeCount: post.likeCount + (next ? 1 : -1),
-      });
-    } catch (caught: unknown) {
-      setNotice(toErrorMessage(caught));
-    }
-  }
-
-  async function toggleFollow() {
-    if (!accessToken || !follow) {
-      setNotice(loginMessage());
-      return;
-    }
-    const next = !follow.isFollowing;
-    try {
-      await setFollow(post.memberId, next, accessToken);
-      setFollowState({
-        ...follow,
-        isFollowing: next,
-        followerCount: follow.followerCount + (next ? 1 : -1),
       });
     } catch (caught: unknown) {
       setNotice(toErrorMessage(caught));
@@ -147,24 +109,6 @@ export function PostDetailPanel({
             <time dateTime={post.createdAt}>{formatRelativeTime(post.createdAt)}</time>
           </p>
         </Link>
-        {!isOwner && (
-          <button
-            type="button"
-            onClick={() => void toggleFollow()}
-            className={
-              follow?.isFollowing
-                ? 'rounded-full border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-600'
-                : 'rounded-full bg-linkup px-3 py-1.5 text-xs font-semibold text-white'
-            }
-          >
-            {follow?.isFollowing ? '팔로잉' : '팔로우'}
-          </button>
-        )}
-        {follow && (
-          <p className="pt-1 text-xs whitespace-nowrap text-zinc-400">
-            팔로워 {follow.followerCount.toLocaleString('ko-KR')}
-          </p>
-        )}
         <ActionMenu
           label="게시글 메뉴"
           items={

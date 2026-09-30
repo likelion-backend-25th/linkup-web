@@ -1,10 +1,11 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Search } from 'lucide-react';
 import { FollowingFeedList } from '@/components/FollowingFeedList.tsx';
 import { SuggestedUsers } from '@/components/SuggestedUsers.tsx';
+import { useAuthStore } from '@/stores/useAuthStore.ts';
+import { useFeedViewStore, type FeedTab } from '@/stores/useFeedViewStore.ts';
+import { useLoginPromptStore } from '@/stores/useLoginPromptStore.ts';
 import type { PostFeedItem } from '@/types/feed.ts';
-
-type FeedTab = 'following' | 'subscribe' | 'popular';
 
 const tabs: { id: FeedTab; label: string }[] = [
   { id: 'popular', label: '인기' },
@@ -12,16 +13,59 @@ const tabs: { id: FeedTab; label: string }[] = [
   { id: 'subscribe', label: '구독' },
 ];
 
+const EMPTY_POSTS: PostFeedItem[] = [];
+
 export function FeedPage() {
-  const [tab, setTab] = useState<FeedTab>('popular');
-  const [query, setQuery] = useState('');
-  const [followingPosts, setFollowingPosts] = useState<PostFeedItem[]>([]);
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const showLoginPrompt = useLoginPromptStore((state) => state.show);
+  const tab = useFeedViewStore((state) => state.tab);
+  const setTab = useFeedViewStore((state) => state.setTab);
+  const query = useFeedViewStore((state) => state.query);
+  const setQuery = useFeedViewStore((state) => state.setQuery);
+  const followingPosts = useFeedViewStore(
+    (state) => state.snapshots.following?.posts ?? EMPTY_POSTS,
+  );
   const feedScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const scroller = feedScrollRef.current;
+    if (scroller === null) {
+      return;
+    }
+
+    function persistScroll() {
+      const node = feedScrollRef.current;
+      if (node === null) {
+        return;
+      }
+      useFeedViewStore.getState().setScrollTop(node.scrollTop);
+    }
+
+    scroller.addEventListener('scroll', persistScroll, { passive: true });
+    return () => {
+      persistScroll();
+      scroller.removeEventListener('scroll', persistScroll);
+    };
+  }, [tab]);
+
+  useEffect(() => {
+    if (!accessToken && (tab === 'following' || tab === 'subscribe')) {
+      setTab('popular');
+    }
+  }, [accessToken, setTab, tab]);
+
+  function selectTab(nextTab: FeedTab) {
+    if ((nextTab === 'following' || nextTab === 'subscribe') && !accessToken) {
+      showLoginPrompt();
+      return;
+    }
+    setTab(nextTab);
+  }
 
   const suggestedUsers = useMemo(() => {
     const seen = new Set<number>();
     return followingPosts
-      .filter((post) => {
+      .filter((post: PostFeedItem) => {
         if (seen.has(post.memberId)) {
           return false;
         }
@@ -45,7 +89,7 @@ export function FeedPage() {
             <button
               key={item.id}
               type="button"
-              onClick={() => setTab(item.id)}
+              onClick={() => selectTab(item.id)}
               className={
                 tab === item.id
                   ? 'border-b-2 border-linkup py-3 text-sm font-semibold text-linkup'
@@ -75,7 +119,6 @@ export function FeedPage() {
               feedType="following"
               query={query}
               scrollRoot={feedScrollRef}
-              onPostsChange={setFollowingPosts}
             />
           )}
           {tab === 'subscribe' && (
@@ -89,7 +132,7 @@ export function FeedPage() {
         </div>
       </section>
 
-      <aside className="flex w-full shrink-0 flex-col gap-4 xl:h-full xl:w-72">
+      <aside className="flex w-full shrink-0 flex-col gap-4 xl:h-full xl:w-80">
         <label className="flex items-center gap-2 rounded-2xl bg-white px-4 py-3 shadow-sm">
           <Search className="size-4 text-zinc-400" aria-hidden />
           <input

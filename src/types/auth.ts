@@ -12,13 +12,14 @@ export interface TokenResponse {
   expiresIn: number;
 }
 
-/** GET /api/v1/members/me 응답 (MemberProfileResponse) */
+/** GET /api/v1/member/me 응답 (MemberDto) */
 export interface MemberProfileResponse {
   id: number;
   email: string;
   nickname: string;
   uniqueId: string | null;
   profileImage: string | null;
+  introduction: string | null;
   role: string;
   createdAt: string;
   creatorStatus?: string | null;

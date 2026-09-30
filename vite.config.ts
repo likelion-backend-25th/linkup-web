@@ -11,9 +11,14 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react(), tailwindcss()],
     resolve: {
+      // lucide 등이 react를 따로 묶으면 zustand 훅이 깨져 화면이 비어 보인다.
+      dedupe: ['react', 'react-dom'],
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
       },
+    },
+    optimizeDeps: {
+      include: ['react', 'react-dom', 'react-dom/client', 'lucide-react', 'zustand'],
     },
     server: {
       watch: {
@@ -42,6 +47,10 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
         },
         '/posts/files': {
+          target: 'https://linkup.likelion.shop',
+          changeOrigin: true,
+        },
+        '/uploads': {
           target: 'https://linkup.likelion.shop',
           changeOrigin: true,
         },

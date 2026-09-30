@@ -14,6 +14,8 @@ export interface PostFeedItem {
   likedByMe: boolean;
 }
 
+export type FeedType = 'following' | 'subscription' | 'popular';
+
 /** GET /api/v1/feeds/following 응답 (FollowingFeedResponse) */
 export interface FollowingFeedResponse {
   posts: PostFeedItem[];
