@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Download, Heart, MessageCircle } from 'lucide-react';
-import { Link, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import { toErrorMessage } from '@/api/http.ts';
 import { deletePost, reportPost, setPostLike } from '@/api/posts.ts';
 import { reportReply } from '@/api/replies.ts';
 import { ActionMenu } from '@/components/ActionMenu.tsx';
 import { ConfirmDialog } from '@/components/ConfirmDialog.tsx';
 import { MemberAvatar } from '@/components/MemberAvatar.tsx';
+import { MemberProfileLink } from '@/components/MemberProfileLink.tsx';
 import { PostReplySection } from '@/components/PostReplySection.tsx';
 import { ReportDialog } from '@/components/ReportDialog.tsx';
 import { useLoginPromptStore } from '@/stores/useLoginPromptStore.ts';
@@ -90,15 +91,15 @@ export function PostDetailPanel({
   return (
     <div className="flex h-full min-h-0 flex-col px-5 py-4">
       <div className="flex items-start gap-3">
-        <Link
-          to={`/members/${post.memberId}`}
+        <MemberProfileLink
+          memberId={post.memberId}
           state={{ name: post.name, uniqueId: post.uniqueId, profileImage: post.profileImage }}
           aria-label={`${post.name} 프로필`}
         >
           <MemberAvatar name={post.name} imageUrl={post.profileImage} />
-        </Link>
-        <Link
-          to={`/members/${post.memberId}`}
+        </MemberProfileLink>
+        <MemberProfileLink
+          memberId={post.memberId}
           state={{ name: post.name, uniqueId: post.uniqueId, profileImage: post.profileImage }}
           className="min-w-0 flex-1 hover:text-linkup"
         >
@@ -108,7 +109,7 @@ export function PostDetailPanel({
             <span className="mx-1">·</span>
             <time dateTime={post.createdAt}>{formatRelativeTime(post.createdAt)}</time>
           </p>
-        </Link>
+        </MemberProfileLink>
         <ActionMenu
           label="게시글 메뉴"
           items={

@@ -821,6 +821,52 @@
         }
       }
     },
+    "/api/v1/member/{memberId}/block": {
+      "post": {
+        "tags": [
+          "member-controller"
+        ],
+        "operationId": "blockMember",
+        "parameters": [
+          {
+            "name": "memberId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "member-controller"
+        ],
+        "operationId": "unblockMember",
+        "parameters": [
+          {
+            "name": "memberId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/v1/auth/refresh": {
       "post": {
         "tags": [
@@ -914,10 +960,82 @@
         }
       }
     },
+    "/api/v1/search/posts": {
+      "get": {
+        "tags": [
+          "post-search-controller"
+        ],
+        "operationId": "searchPosts",
+        "parameters": [
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "ALL",
+              "enum": [
+                "ALL",
+                "FOLLOWING",
+                "SUBSCRIBING"
+              ]
+            }
+          },
+          {
+            "name": "cursorId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          },
+          {
+            "name": "X-Member-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CursorResponsePostCardResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/search/members": {
       "get": {
         "tags": [
-          "search-controller"
+          "member-search-controller"
         ],
         "operationId": "searchMembers",
         "parameters": [
@@ -1097,6 +1215,106 @@
         }
       }
     },
+    "/api/v1/members/{memberId}/followings": {
+      "get": {
+        "tags": [
+          "follow-controller"
+        ],
+        "operationId": "getFollowings",
+        "parameters": [
+          {
+            "name": "memberId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowMemberPageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/members/{memberId}/followers": {
+      "get": {
+        "tags": [
+          "follow-controller"
+        ],
+        "operationId": "getFollowers",
+        "parameters": [
+          {
+            "name": "memberId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowMemberPageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/members/me/feeds": {
       "get": {
         "tags": [
@@ -1180,6 +1398,60 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/FeedResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/member/{memberId}": {
+      "get": {
+        "tags": [
+          "member-controller"
+        ],
+        "operationId": "getMemberProfile",
+        "parameters": [
+          {
+            "name": "memberId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/member/blocks": {
+      "get": {
+        "tags": [
+          "member-controller"
+        ],
+        "operationId": "getBlockedMembers",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BlockedMemberResponseDto"
+                  }
                 }
               }
             }
@@ -1324,6 +1596,55 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/FeedResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/creators": {
+      "get": {
+        "tags": [
+          "creator-controller"
+        ],
+        "summary": "크리에이터인 사용자의 구독자 리스트 조회",
+        "description": "크리에이터인 사용자의 Auth 정보에서 ID값을 가져와 구독자 리스트를 조회하여 반환한다",
+        "operationId": "getSubscribeCreatorList_1",
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "다음 페이징 커서 값",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "페이지 사이즈",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10,
+              "maximum": 20,
+              "minimum": 3
+            },
+            "example": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "리스트 조회 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagingSubscriberListResponse"
                 }
               }
             }
@@ -1584,6 +1905,9 @@
           },
           "introduction": {
             "type": "string"
+          },
+          "uniqueId": {
+            "type": "string"
           }
         }
       },
@@ -1595,12 +1919,11 @@
             "type": "integer",
             "format": "int64"
           },
-          "customerUid": {
+          "customerKey": {
             "type": "string"
           },
-          "price": {
-            "type": "integer",
-            "format": "int32"
+          "authKey": {
+            "type": "string"
           }
         }
       },
@@ -1796,6 +2119,70 @@
           }
         }
       },
+      "CursorResponsePostCardResponse": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostCardResponse"
+            }
+          },
+          "nextCursor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "hasNext": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PostCardResponse": {
+        "type": "object",
+        "properties": {
+          "postId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberName": {
+            "type": "string"
+          },
+          "uniqueId": {
+            "type": "string"
+          },
+          "profileImageUrl": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "mainImageUrl": {
+            "type": "string"
+          },
+          "likeCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "commentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "likedByMe": {
+            "type": "boolean"
+          },
+          "subscriberOnly": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "CursorResponseMemberSearchResponse": {
         "type": "object",
         "properties": {
@@ -1948,6 +2335,9 @@
             "type": "integer",
             "format": "int32"
           },
+          "likedByMe": {
+            "type": "boolean"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -2000,10 +2390,28 @@
           }
         }
       },
-      "PostCardResponse": {
+      "FollowMemberPageResponse": {
         "type": "object",
         "properties": {
-          "postId": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FollowMemberResponse"
+            }
+          },
+          "nextCursor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "hasNext": {
+            "type": "boolean"
+          }
+        }
+      },
+      "FollowMemberResponse": {
+        "type": "object",
+        "properties": {
+          "followId": {
             "type": "integer",
             "format": "int64"
           },
@@ -2011,35 +2419,53 @@
             "type": "integer",
             "format": "int64"
           },
-          "memberName": {
+          "name": {
             "type": "string"
           },
           "uniqueId": {
             "type": "string"
           },
-          "profileImageUrl": {
+          "profileImage": {
+            "type": "string"
+          }
+        }
+      },
+      "MemberResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "uniqueId": {
             "type": "string"
           },
-          "content": {
+          "name": {
             "type": "string"
           },
-          "mainImageUrl": {
+          "profileImage": {
             "type": "string"
           },
-          "likeCount": {
+          "introduction": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "followerCount": {
             "type": "integer",
             "format": "int32"
           },
-          "commentCount": {
+          "followingCount": {
             "type": "integer",
             "format": "int32"
           },
-          "subscriberOnly": {
-            "type": "boolean"
+          "postCount": {
+            "type": "integer",
+            "format": "int32"
           },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
+          "subscribedStatus": {
+            "type": "string"
           }
         }
       },
@@ -2076,6 +2502,84 @@
           "followingCount": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "BlockedMemberResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "uniqueId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "profileImage": {
+            "type": "string"
+          }
+        }
+      },
+      "PagingSubscriberListResponse": {
+        "type": "object",
+        "properties": {
+          "subscriberList": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubscriberResponse"
+            }
+          },
+          "subscriberCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nextCursor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "hasNext": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SubscriberResponse": {
+        "type": "object",
+        "properties": {
+          "subscriptionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "creatorId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberName": {
+            "type": "string"
+          },
+          "memberUniqueId": {
+            "type": "string"
+          },
+          "profileImage": {
+            "type": "string"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "nextBillingAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },

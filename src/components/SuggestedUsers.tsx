@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
 import { MemberAvatar } from '@/components/MemberAvatar.tsx';
+import { MemberProfileLink } from '@/components/MemberProfileLink.tsx';
 import { useLoginPromptStore } from '@/stores/useLoginPromptStore.ts';
 
 interface SuggestedUser {
@@ -40,8 +40,8 @@ export function SuggestedUsers({ users }: SuggestedUsersProps) {
             const isFollowing = following.includes(user.memberId);
             return (
               <li key={user.memberId} className="flex items-center gap-3">
-                <Link
-                  to={`/members/${user.memberId}`}
+                <MemberProfileLink
+                  memberId={user.memberId}
                   state={{
                     name: user.nickname,
                     uniqueId: user.uniqueId,
@@ -50,9 +50,9 @@ export function SuggestedUsers({ users }: SuggestedUsersProps) {
                   aria-label={`${user.nickname} 프로필`}
                 >
                   <MemberAvatar name={user.nickname} imageUrl={user.profileImage} size="sm" />
-                </Link>
-                <Link
-                  to={`/members/${user.memberId}`}
+                </MemberProfileLink>
+                <MemberProfileLink
+                  memberId={user.memberId}
                   state={{
                     name: user.nickname,
                     uniqueId: user.uniqueId,
@@ -62,7 +62,7 @@ export function SuggestedUsers({ users }: SuggestedUsersProps) {
                 >
                   <p className="truncate text-sm font-medium text-zinc-800">{user.nickname}</p>
                   <p className="truncate text-xs text-zinc-400">@{user.uniqueId}</p>
-                </Link>
+                </MemberProfileLink>
                 <button
                   type="button"
                   onClick={() => toggleFollow(user.memberId)}
