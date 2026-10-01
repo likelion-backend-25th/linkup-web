@@ -1,7 +1,12 @@
-import { BrowserRouter, Route, Routes } from 'react-router';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
+import { RequireAdmin } from '@/components/RequireAdmin.tsx';
 import { RequireAuth } from '@/components/RequireAuth.tsx';
+import { AdminLayout } from '@/layouts/AdminLayout.tsx';
 import { FeedKeepAliveLayout } from '@/layouts/FeedKeepAliveLayout.tsx';
 import { RootLayout } from '@/layouts/RootLayout.tsx';
+import { AdminMembersPage } from '@/pages/admin/AdminMembersPage.tsx';
+import { AdminPaymentsPage } from '@/pages/admin/AdminPaymentsPage.tsx';
+import { AdminReportsPage } from '@/pages/admin/AdminReportsPage.tsx';
 import { LoginPage } from '@/pages/LoginPage.tsx';
 import { OAuthCallbackPage } from '@/pages/OAuthCallbackPage.tsx';
 import { PlaceholderPage } from '@/pages/PlaceholderPage.tsx';
@@ -38,7 +43,14 @@ export default function App() {
             <Route path="/profile/edit" element={<ProfileEditPage />} />
             <Route path="/profile/follows" element={<FollowListPage />} />
             <Route path="/notifications" element={<PlaceholderPage title="알림" />} />
-            <Route path="/admin" element={<PlaceholderPage title="관리자페이지" />} />
+            <Route element={<RequireAdmin />}>
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<Navigate to="members" replace />} />
+                <Route path="members" element={<AdminMembersPage />} />
+                <Route path="reports" element={<AdminReportsPage />} />
+                <Route path="payment" element={<AdminPaymentsPage />} />
+              </Route>
+            </Route>
             <Route path="/settings" element={<SettingsPage />} />
           </Route>
         </Route>
