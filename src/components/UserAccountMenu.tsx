@@ -16,6 +16,7 @@ export function UserAccountMenu() {
 
   const displayName = profile?.nickname ?? '회원';
   const handle = profile?.uniqueId || '';
+  const isAdmin = profile?.role.trim().toUpperCase() === 'ROLE_ADMIN';
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -66,6 +67,16 @@ export function UserAccountMenu() {
           >
             구독 관리
           </Link>
+          {isAdmin ? (
+            <Link
+              role="menuitem"
+              to="/admin"
+              onClick={() => setOpen(false)}
+              className="block px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+            >
+              관리자 페이지
+            </Link>
+          ) : null}
           <Link
             role="menuitem"
             to="/settings"
