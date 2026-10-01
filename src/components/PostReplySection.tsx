@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Heart } from 'lucide-react';
-import { Link } from 'react-router';
 import {
   createReply,
   deleteReply,
@@ -12,6 +11,7 @@ import { isAbortError, isHttpStatusError, toErrorMessage } from '@/api/http.ts';
 import { ActionMenu } from '@/components/ActionMenu.tsx';
 import { ConfirmDialog } from '@/components/ConfirmDialog.tsx';
 import { MemberAvatar } from '@/components/MemberAvatar.tsx';
+import { MemberProfileLink } from '@/components/MemberProfileLink.tsx';
 import { useLoginPromptStore } from '@/stores/useLoginPromptStore.ts';
 import type { ReplyResponse } from '@/types/reply.ts';
 import { formatRelativeTime } from '@/utils/formatDateTime.ts';
@@ -213,8 +213,8 @@ export function PostReplySection({
         <ul className="flex flex-col gap-4 py-2">
           {replies.map((reply) => (
             <li key={reply.id} className="flex gap-2">
-              <Link
-                to={`/members/${reply.memberId}`}
+              <MemberProfileLink
+                memberId={reply.memberId}
                 state={{
                   name: reply.name,
                   uniqueId: reply.uniqueId,
@@ -223,11 +223,11 @@ export function PostReplySection({
                 aria-label={`${reply.name} 프로필`}
               >
                 <MemberAvatar name={reply.name} imageUrl={reply.profileImage} size="sm" />
-              </Link>
+              </MemberProfileLink>
               <div className="min-w-0 flex-1">
                 <div className="flex items-start gap-2">
-                  <Link
-                    to={`/members/${reply.memberId}`}
+                  <MemberProfileLink
+                    memberId={reply.memberId}
                     state={{
                       name: reply.name,
                       uniqueId: reply.uniqueId,
@@ -240,7 +240,7 @@ export function PostReplySection({
                     <span className="ml-1 text-xs text-zinc-400">
                       {formatRelativeTime(reply.createdAt)}
                     </span>
-                  </Link>
+                  </MemberProfileLink>
                   <ActionMenu
                     label="댓글 메뉴"
                     items={replyActions(reply)}

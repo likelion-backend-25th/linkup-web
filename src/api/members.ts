@@ -33,8 +33,8 @@ function parseMemberResponse(value: unknown): MemberResponseDto | null {
     postCount: asNumber(value.postCount),
     followerCount: asNumber(value.followerCount) ?? asNumber(value.follower_count),
     followingCount: asNumber(value.followingCount) ?? asNumber(value.following_count),
-    creator: typeof value.creator === 'boolean' ? value.creator : null,
-    subscriptionPrice: asNumber(value.subscriptionPrice),
+    role: asString(value.role),
+    subscribedStatus: asString(value.subscribedStatus)?.toUpperCase() ?? null,
   };
 }
 

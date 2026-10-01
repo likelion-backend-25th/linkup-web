@@ -15,6 +15,8 @@ export interface MemberResponseDto {
   postCount: number | null;
   followerCount: number | null;
   followingCount: number | null;
-  creator: boolean | null;
-  subscriptionPrice: number | null;
+  /** ROLE_USER | ROLE_CREATOR | ROLE_ADMIN */
+  role: string | null;
+  /** 로그인 사용자의 이 회원 구독 상태. null 이면 미구독, ACTIVE | CANCELED */
+  subscribedStatus: string | null;
 }

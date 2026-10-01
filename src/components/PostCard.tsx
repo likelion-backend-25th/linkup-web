@@ -5,6 +5,7 @@ import { setPostLike } from '@/api/posts.ts';
 import { toErrorMessage } from '@/api/http.ts';
 import { MediaImage } from '@/components/MediaImage.tsx';
 import { MemberAvatar } from '@/components/MemberAvatar.tsx';
+import { MemberProfileLink } from '@/components/MemberProfileLink.tsx';
 import { useAuthStore } from '@/stores/useAuthStore.ts';
 import { useLoginPromptStore } from '@/stores/useLoginPromptStore.ts';
 import type { PostFeedItem } from '@/types/feed.ts';
@@ -44,19 +45,23 @@ export function PostCard({ post }: PostCardProps) {
   return (
     <article className="border-b border-zinc-100 py-4 last:border-b-0">
       <div className="flex items-start gap-3">
-        <Link to={`/members/${post.memberId}`} state={profileState} aria-label={`${post.memberName} 프로필`}>
+        <MemberProfileLink
+          memberId={post.memberId}
+          state={profileState}
+          aria-label={`${post.memberName} 프로필`}
+        >
           <MemberAvatar name={post.memberName} imageUrl={post.profileImageUrl} size="md" />
-        </Link>
+        </MemberProfileLink>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 text-sm">
-            <Link
-              to={`/members/${post.memberId}`}
+            <MemberProfileLink
+              memberId={post.memberId}
               state={profileState}
               className="flex min-w-0 items-center gap-1.5 hover:text-linkup"
             >
               <span className="truncate font-semibold text-zinc-900">{post.memberName}</span>
               <span className="truncate text-xs text-zinc-400">@{post.uniqueId}</span>
-            </Link>
+            </MemberProfileLink>
             <span className="ml-auto shrink-0 text-xs text-zinc-400">
               {formatRelativeTime(post.createdAt)}
             </span>

@@ -1,5 +1,7 @@
 import { fetchApiJson } from '@/api/http.ts';
 import type {
+  CreateSubscriptionRequest,
+  CreateSubscriptionResponse,
   PagingSubListResponse,
   SubscribeCreatorListResponse,
   SubscriptionDetailResponse,
@@ -113,4 +115,19 @@ export async function fetchSubscriptionDetail(
     endDate: data.endDate ?? null,
     nextBillingAt: data.nextBillingAt ?? null,
   };
+}
+
+export async function createSubscription(
+  request: CreateSubscriptionRequest,
+  accessToken: string,
+): Promise<CreateSubscriptionResponse> {
+  const data = await fetchApiJson('/api/v1/subscriptions', {
+    method: 'POST',
+    body: request,
+    accessToken,
+  });
+  if (!isRecord(data) || typeof data.subscriptionId !== 'number') {
+    throw new Error('구독 등록 응답 형식이 올바르지 않습니다.');
+  }
+  return { subscriptionId: data.subscriptionId };
 }

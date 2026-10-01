@@ -18,6 +18,18 @@ export interface PagingSubListResponse {
   hasNext: boolean;
 }
 
+/** POST /api/v1/subscriptions 요청 (CreateSubscriptionRequest) */
+export interface CreateSubscriptionRequest {
+  creatorId: number;
+  customerKey: string;
+  authKey: string;
+}
+
+/** POST /api/v1/subscriptions 응답 (CreateSubscriptionResponse) */
+export interface CreateSubscriptionResponse {
+  subscriptionId: number;
+}
+
 /** GET /api/v1/subscriptions/{id} 응답 (SubscriptionDetailResponse) */
 export interface SubscriptionDetailResponse {
   subscriptionId: number;
