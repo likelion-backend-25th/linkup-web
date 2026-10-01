@@ -262,18 +262,6 @@ function displayDate(value: string | null): string {
   return value ? formatDateTime(value) : '-';
 }
 
-function formatPaymentDateTime(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-  const datePart = new Intl.DateTimeFormat('ko-KR', { dateStyle: 'medium' }).format(date);
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const seconds = String(date.getSeconds()).padStart(2, '0');
-  return `${datePart} ${hours}:${minutes}:${seconds}`;
-}
-
 function StatusBadge({ status }: { status: string }) {
   return (
     <span
@@ -442,7 +430,7 @@ export function AdminPaymentsPage() {
                         }
                       >
                         <td className="whitespace-nowrap py-3 pl-6 pr-4 text-zinc-700">
-                          {formatPaymentDateTime(payment.paymentDate)}
+                          {formatDateTime(payment.paymentDate)}
                         </td>
                         <td className="truncate px-4 py-3 text-zinc-900">{payment.sellerNickname}</td>
                         <td className="truncate px-4 py-3 text-zinc-700">{payment.buyerNickname}</td>
@@ -514,7 +502,7 @@ function PaymentDetail({ detail }: { detail: AdminPaymentDetailResponse }) {
         <dt className="text-zinc-400">결제 번호</dt>
         <dd className="text-zinc-800">{detail.paymentId}</dd>
         <dt className="text-zinc-400">결제 일시</dt>
-        <dd className="text-zinc-800">{formatPaymentDateTime(detail.paymentDate)}</dd>
+        <dd className="text-zinc-800">{displayDate(detail.paymentDate)}</dd>
         <dt className="text-zinc-400">결제 금액</dt>
         <dd className="text-zinc-800">{formatAmount(detail.amount)}</dd>
         <dt className="text-zinc-400">결제 상태</dt>

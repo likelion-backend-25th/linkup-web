@@ -5,6 +5,17 @@ export interface MemberUpdateRequest {
   introduction: string;
 }
 
+/** GET /api/v1/member/recommendations 항목 (RecommendedMemberResponseDto) */
+export interface RecommendedMemberResponseDto {
+  id: number;
+  name: string;
+  uniqueId: string;
+  profileImage: string | null;
+  introduction: string | null;
+  followerCount: number;
+  following: boolean;
+}
+
 /** GET /api/v1/member/{memberId} 응답 (MemberResponseDto) */
 export interface MemberResponseDto {
   id: number;

@@ -3,7 +3,6 @@ import { Download, Heart, MessageCircle } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { toErrorMessage } from '@/api/http.ts';
 import { deletePost, reportPost, setPostLike } from '@/api/posts.ts';
-import { reportReply } from '@/api/replies.ts';
 import { ActionMenu } from '@/components/ActionMenu.tsx';
 import { ConfirmDialog } from '@/components/ConfirmDialog.tsx';
 import { MemberAvatar } from '@/components/MemberAvatar.tsx';
@@ -22,8 +21,6 @@ interface PostDetailPanelProps {
   onPostChange: (post: PostDetailResponse) => void;
 }
 
-type ReportTarget = { kind: 'post' } | { kind: 'reply'; replyId: number };
-
 function loginMessage() {
   return '로그인 후 이용할 수 있습니다.';
 }
@@ -38,7 +35,7 @@ export function PostDetailPanel({
   const isOwner = viewerId === post.memberId;
   const [replyCount, setReplyCount] = useState(0);
   const [notice, setNotice] = useState<string | null>(null);
-  const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
+  const [reportOpen, setReportOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const promptIfLoggedOut = useLoginPromptStore((state) => state.promptIfLoggedOut);
@@ -77,14 +74,10 @@ export function PostDetailPanel({
   }
 
   async function submitReport(reason: string, content: string) {
-    if (!accessToken || !reportTarget) {
+    if (!accessToken) {
       throw new Error(loginMessage());
     }
-    if (reportTarget.kind === 'post') {
-      await reportPost(post.id, reason, content, accessToken);
-    } else {
-      await reportReply(post.id, reportTarget.replyId, reason, content, accessToken);
-    }
+    await reportPost(post.id, reason, content, accessToken);
     setNotice('신고했습니다.');
   }
 
@@ -118,7 +111,7 @@ export function PostDetailPanel({
                   { label: '수정하기', onSelect: () => void navigate(`/posts/${post.id}/edit`) },
                   { label: '삭제하기', danger: true, onSelect: () => setConfirmDelete(true) },
                 ]
-              : [{ label: '신고하기', onSelect: () => setReportTarget({ kind: 'post' }) }]
+              : [{ label: '신고하기', onSelect: () => setReportOpen(true) }]
           }
         />
       </div>
@@ -163,7 +156,6 @@ export function PostDetailPanel({
           accessToken={accessToken}
           subscriberOnly={post.subscriberOnly}
           onCount={setReplyCount}
-          onReport={(replyId) => setReportTarget({ kind: 'reply', replyId })}
         />
       </div>
 
@@ -176,10 +168,10 @@ export function PostDetailPanel({
         />
       )}
 
-      {reportTarget && (
+      {reportOpen && (
         <ReportDialog
-          title={reportTarget.kind === 'post' ? '게시글 신고' : '댓글 신고'}
-          onClose={() => setReportTarget(null)}
+          title="게시글 신고"
+          onClose={() => setReportOpen(false)}
           onSubmit={submitReport}
         />
       )}

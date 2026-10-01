@@ -1,15 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Heart } from 'lucide-react';
 import {
   createReply,
   deleteReply,
   fetchReplies,
+  reportReply,
   setReplyLike,
   updateReply,
 } from '@/api/replies.ts';
 import { isAbortError, isHttpStatusError, toErrorMessage } from '@/api/http.ts';
 import { ActionMenu } from '@/components/ActionMenu.tsx';
 import { ConfirmDialog } from '@/components/ConfirmDialog.tsx';
+import { ReportDialog } from '@/components/ReportDialog.tsx';
 import { MemberAvatar } from '@/components/MemberAvatar.tsx';
 import { MemberProfileLink } from '@/components/MemberProfileLink.tsx';
 import { useLoginPromptStore } from '@/stores/useLoginPromptStore.ts';
@@ -23,7 +25,6 @@ interface PostReplySectionProps {
   accessToken: string | null;
   subscriberOnly?: boolean;
   onCount: (count: number) => void;
-  onReport: (replyId: number) => void;
 }
 
 function loginMessage() {
@@ -54,9 +55,11 @@ export function PostReplySection({
   accessToken,
   subscriberOnly = false,
   onCount,
-  onReport,
 }: PostReplySectionProps) {
   const [replies, setReplies] = useState<ReplyResponse[]>([]);
+  const hiddenReplyIds = useRef(new Set<number>());
+  const [reportReplyId, setReportReplyId] = useState<number | null>(null);
+  const [replyNotice, setReplyNotice] = useState<string | null>(null);
   const [cursor, setCursor] = useState<number | null>(null);
   const [hasNext, setHasNext] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,16 +70,31 @@ export function PostReplySection({
   const [deleting, setDeleting] = useState(false);
   const promptIfLoggedOut = useLoginPromptStore((state) => state.promptIfLoggedOut);
 
+  function visibleReplies(list: ReplyResponse[]): ReplyResponse[] {
+    return list.filter((reply) => reply.hidden !== true && !hiddenReplyIds.current.has(reply.id));
+  }
+
+  function hideReportedReply(replyId: number) {
+    hiddenReplyIds.current.add(replyId);
+    setReplies((current) => {
+      const next = current.filter((reply) => reply.id !== replyId);
+      onCount(next.length);
+      return next;
+    });
+    setReplyNotice('댓글을 신고했습니다.');
+  }
+
   useEffect(() => {
     const controller = new AbortController();
 
     async function load() {
       try {
         const page = await fetchReplies(postId, null, controller.signal, accessToken);
-        setReplies(page.replies);
+        const visible = visibleReplies(page.replies);
+        setReplies(visible);
         setCursor(page.nextCursor);
         setHasNext(page.hasNext);
-        onCount(page.replies.length);
+        onCount(visible.length);
       } catch (caught: unknown) {
         if (isAbortError(caught)) {
           return;
@@ -91,10 +109,11 @@ export function PostReplySection({
 
   async function reload() {
     const page = await fetchReplies(postId, null, undefined, accessToken);
-    setReplies(page.replies);
+    const visible = visibleReplies(page.replies);
+    setReplies(visible);
     setCursor(page.nextCursor);
     setHasNext(page.hasNext);
-    onCount(page.replies.length);
+    onCount(visible.length);
   }
 
   async function loadMore() {
@@ -102,7 +121,7 @@ export function PostReplySection({
       return;
     }
     const page = await fetchReplies(postId, cursor, undefined, accessToken);
-    const next = [...replies, ...page.replies];
+    const next = visibleReplies([...replies, ...page.replies]);
     setReplies(next);
     setCursor(page.nextCursor);
     setHasNext(page.hasNext);
@@ -204,14 +223,24 @@ export function PostReplySection({
     if (ownPost) {
       return [remove];
     }
-    return [{ label: '신고하기', onSelect: () => onReport(reply.id) }];
+    return [{ label: '신고하기', onSelect: () => setReportReplyId(reply.id) }];
+  }
+
+  async function submitReplyReport(reason: string, content: string) {
+    if (!accessToken || reportReplyId === null) {
+      throw new Error(loginMessage());
+    }
+    const replyId = reportReplyId;
+    await reportReply(postId, replyId, reason, content, accessToken);
+    hideReportedReply(replyId);
   }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 overflow-y-auto">
+        {replyNotice && <p className="py-2 text-sm text-red-500">{replyNotice}</p>}
         <ul className="flex flex-col gap-4 py-2">
-          {replies.map((reply) => (
+          {replies.filter((reply) => reply.hidden !== true).map((reply) => (
             <li key={reply.id} className="flex gap-2">
               <MemberProfileLink
                 memberId={reply.memberId}
@@ -320,6 +349,13 @@ export function PostReplySection({
           pending={deleting}
           onClose={() => setDeleteTargetId(null)}
           onConfirm={() => void removeReply(deleteTargetId)}
+        />
+      )}
+      {reportReplyId !== null && (
+        <ReportDialog
+          title="댓글 신고"
+          onClose={() => setReportReplyId(null)}
+          onSubmit={submitReplyReport}
         />
       )}
     </div>
