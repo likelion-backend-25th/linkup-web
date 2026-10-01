@@ -126,8 +126,21 @@ export async function createSubscription(
     body: request,
     accessToken,
   });
-  if (!isRecord(data) || typeof data.subscriptionId !== 'number') {
+  if (
+    !isRecord(data) ||
+    typeof data.subscriptionId !== 'number' ||
+    typeof data.totalAmount !== 'number' ||
+    !isNullableString(data.orderName) ||
+    !isNullableString(data.status) ||
+    !isNullableString(data.approvedAt)
+  ) {
     throw new Error('구독 등록 응답 형식이 올바르지 않습니다.');
   }
-  return { subscriptionId: data.subscriptionId };
+  return {
+    subscriptionId: data.subscriptionId,
+    orderName: typeof data.orderName === 'string' ? data.orderName : null,
+    status: typeof data.status === 'string' ? data.status : null,
+    totalAmount: data.totalAmount,
+    approvedAt: typeof data.approvedAt === 'string' ? data.approvedAt : null,
+  };
 }

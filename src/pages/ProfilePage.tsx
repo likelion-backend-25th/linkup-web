@@ -11,6 +11,7 @@ import { AlertDialog } from '@/components/AlertDialog.tsx';
 import { ConfirmDialog } from '@/components/ConfirmDialog.tsx';
 import { MediaImage } from '@/components/MediaImage.tsx';
 import { MemberAvatar } from '@/components/MemberAvatar.tsx';
+import { PaymentReceipt } from '@/components/PaymentReceipt.tsx';
 import { SubscriberOnlyGate } from '@/components/SubscriberOnlyGate.tsx';
 import { useBillingResult } from '@/hooks/useBillingResult.ts';
 import { useAuthStore } from '@/stores/useAuthStore.ts';
@@ -561,7 +562,9 @@ export function ProfilePage() {
           detail={billing.dialog.detail}
           pending={billing.dialog.pending}
           onClose={closeBillingDialog}
-        />
+        >
+          {billing.dialog.payment && <PaymentReceipt payment={billing.dialog.payment} />}
+        </AlertDialog>
       )}
     </section>
   );
