@@ -7,6 +7,7 @@ import { RootLayout } from '@/layouts/RootLayout.tsx';
 import { AdminMembersPage } from '@/pages/admin/AdminMembersPage.tsx';
 import { AdminPaymentsPage } from '@/pages/admin/AdminPaymentsPage.tsx';
 import { AdminReportsPage } from '@/pages/admin/AdminReportsPage.tsx';
+import { CreatorPage } from '@/pages/CreatorPage.tsx';
 import { LoginPage } from '@/pages/LoginPage.tsx';
 import { OAuthCallbackPage } from '@/pages/OAuthCallbackPage.tsx';
 import { PostCreatePage } from '@/pages/PostCreatePage.tsx';
@@ -38,6 +39,7 @@ export default function App() {
           <Route element={<RequireAuth />}>
             <Route path="/search" element={<SearchPage />} />
             <Route path="/subscriptions" element={<SubscriptionsPage />} />
+            <Route path="/creators" element={<CreatorPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/profile/edit" element={<ProfileEditPage />} />
             <Route path="/profile/follows" element={<FollowListPage />} />

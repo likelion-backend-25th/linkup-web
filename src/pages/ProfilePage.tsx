@@ -464,9 +464,12 @@ export function ProfilePage() {
           >
             프로필 수정
           </Link>
-          <span className="rounded-xl border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-400">
+          <Link
+            to="/creators"
+            className="rounded-xl border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+          >
             크리에이터 페이지
-          </span>
+          </Link>
           <Link
             to="/subscriptions"
             className="rounded-xl border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"

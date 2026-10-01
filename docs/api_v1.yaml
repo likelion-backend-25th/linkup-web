@@ -2239,8 +2239,7 @@
         "type": "object",
         "properties": {
           "billingDate": {
-            "type": "string",
-            "format": "date-time"
+            "type": "string"
           }
         }
       },
