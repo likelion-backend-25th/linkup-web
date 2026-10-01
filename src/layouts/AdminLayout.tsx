@@ -2,7 +2,7 @@ import { NavLink, Outlet } from 'react-router';
 
 const menus = [
   { to: '/admin/members', label: '회원' },
-  { to: '/admin/reports', label: '신고' },
+  { to: '/admin/reports', label: '신고 관리' },
   { to: '/admin/payment', label: '결제' },
 ] as const;
 

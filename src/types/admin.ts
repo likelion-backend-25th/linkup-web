@@ -12,8 +12,8 @@ export interface AdminReportResponse {
   id: number;
   targetType: string;
   reporterName: string;
-  targetUserName: string;
-  content: string;
+  targetUserName: string | null;
+  content: string | null;
   reason: string;
   createdAt: string;
   status: string;
@@ -29,14 +29,14 @@ export interface AdminOperationResponse {
 export interface AdminReportDetailResponse {
   id: number;
   targetType: string;
-  postId: number;
-  replyId: number;
-  targetMemberId: number;
+  postId: number | null;
+  replyId: number | null;
+  targetMemberId: number | null;
   reporterName: string;
-  targetUserName: string;
-  content: string;
+  targetUserName: string | null;
+  content: string | null;
   reason: string;
-  reportContent: string;
+  reportContent: string | null;
   createdAt: string;
   status: string;
 }
