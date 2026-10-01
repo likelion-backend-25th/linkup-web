@@ -23,6 +23,11 @@ function isSubscriber(value: unknown): value is SubscriberResponse {
   );
 }
 
+/** POST /api/v1/creators — 조건 미충족이어도 204 라서 결과는 role 재조회로 확인해야 한다. */
+export async function applyCreator(accessToken: string): Promise<void> {
+  await fetchApiJson('/api/v1/creators', { method: 'POST', accessToken });
+}
+
 export async function fetchSubscribers(
   accessToken: string,
   cursor: number | null,

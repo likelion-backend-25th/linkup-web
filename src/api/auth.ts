@@ -54,6 +54,20 @@ export async function loginRequest(payload: LoginRequest): Promise<TokenResponse
   return data;
 }
 
+/** POST /api/v1/auth/refresh 응답 (AccessTokenResponseDto) */
+export async function refreshTokens(
+  refreshToken: string,
+): Promise<{ accessToken: string; refreshToken: string }> {
+  const data = await fetchApiJson('/api/v1/auth/refresh', {
+    method: 'POST',
+    body: { refreshToken },
+  });
+  if (!isRecord(data) || typeof data.token !== 'string' || typeof data.refreshToken !== 'string') {
+    throw new Error('토큰 재발급 응답 형식이 올바르지 않습니다.');
+  }
+  return { accessToken: data.token, refreshToken: data.refreshToken };
+}
+
 export async function fetchMyProfile(
   accessToken: string,
   signal?: AbortSignal,
@@ -84,6 +98,7 @@ export async function fetchMyProfile(
     introduction: asString(data.introduction) ?? asString(data.intro),
     role,
     createdAt: asString(data.createdAt) ?? '',
+    followerCount: typeof data.followerCount === 'number' ? data.followerCount : undefined,
     creatorStatus,
     isCreator,
   };

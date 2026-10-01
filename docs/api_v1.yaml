@@ -909,6 +909,68 @@
         }
       }
     },
+    "/api/v1/creators": {
+      "get": {
+        "tags": [
+          "creator-controller"
+        ],
+        "summary": "크리에이터인 사용자의 구독자 리스트 조회",
+        "description": "크리에이터인 사용자의 Auth 정보에서 ID값을 가져와 구독자 리스트를 조회하여 반환한다",
+        "operationId": "getSubscribeCreatorList_1",
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "다음 페이징 커서 값",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "페이지 사이즈",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10,
+              "maximum": 20,
+              "minimum": 3
+            },
+            "example": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "리스트 조회 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagingSubscriberListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "creator-controller"
+        ],
+        "summary": "사용자 크리에이터 승인",
+        "description": "사용자의 크리에이터 신청을 승인한다",
+        "operationId": "applyCreator",
+        "responses": {
+          "204": {
+            "description": "크리에이터 승인 완료"
+          }
+        }
+      }
+    },
     "/api/v1/auth/refresh": {
       "post": {
         "tags": [
@@ -1678,55 +1740,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/FeedResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/creators": {
-      "get": {
-        "tags": [
-          "creator-controller"
-        ],
-        "summary": "크리에이터인 사용자의 구독자 리스트 조회",
-        "description": "크리에이터인 사용자의 Auth 정보에서 ID값을 가져와 구독자 리스트를 조회하여 반환한다",
-        "operationId": "getSubscribeCreatorList_1",
-        "parameters": [
-          {
-            "name": "cursor",
-            "in": "query",
-            "description": "다음 페이징 커서 값",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            },
-            "example": 1
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "description": "페이지 사이즈",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 10,
-              "maximum": 20,
-              "minimum": 3
-            },
-            "example": 10
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "리스트 조회 성공",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PagingSubscriberListResponse"
                 }
               }
             }
