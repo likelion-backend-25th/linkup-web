@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { fetchAdminMember, fetchAdminMembers } from '@/api/admin.ts';
 import { isAbortError, toErrorMessage } from '@/api/http.ts';
+import { AdminDetailPane } from '@/components/AdminDetailPane.tsx';
 import { MemberAvatar } from '@/components/MemberAvatar.tsx';
 import type { AdminMemberDetailResponse, AdminMemberResponse } from '@/types/admin.ts';
 import { formatDateTime } from '@/utils/formatDateTime.ts';
@@ -136,7 +137,7 @@ export function AdminMembersPage() {
             className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm outline-none focus:border-linkup"
           >
             <option value="">회원 상태 전체</option>
-            <option value="ACTIVE">활성</option>
+            <option value="ACTIVE">온라인</option>
             <option value="SUSPENDED">정지</option>
           </select>
           <select
@@ -160,7 +161,7 @@ export function AdminMembersPage() {
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col border-b border-zinc-100 lg:border-r lg:border-b-0">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col border-b border-zinc-100 lg:border-b-0">
           <div className="linkup-scrollbar min-h-0 flex-1 overflow-auto">
             {loading && members.length === 0 ? (
               <p className="px-5 py-8 text-sm text-zinc-400">회원 목록을 불러오는 중...</p>
@@ -202,7 +203,13 @@ export function AdminMembersPage() {
                         </td>
                         <td className="px-4 py-3 text-zinc-700">@{member.userId}</td>
                         <td className="px-4 py-3 text-zinc-700">
-                          {statusLabel(memberStatusLabel, member.memberStatus)}
+                          <span className="inline-flex items-center gap-2">
+                            <span
+                              className={`h-2 w-2 shrink-0 rounded-full ${member.memberStatus === 'ACTIVE' ? 'bg-green-500' : 'bg-red-500'}`}
+                              aria-hidden
+                            />
+                            {statusLabel(memberStatusLabel, member.memberStatus)}
+                          </span>
                         </td>
                         <td className="px-4 py-3 text-zinc-700">
                           {statusLabel(creatorStatusLabel, member.creatorStatus)}
@@ -238,7 +245,7 @@ export function AdminMembersPage() {
           </div>
         </div>
 
-        <aside className="linkup-scrollbar min-h-0 w-full overflow-y-auto p-5 lg:w-72 lg:shrink-0">
+        <AdminDetailPane label="회원 상세">
           <h2 className="text-base font-semibold text-zinc-900">회원 상세</h2>
           {selectedId === null ? (
             <p className="mt-4 text-sm text-zinc-400">목록에서 회원을 선택하세요.</p>
@@ -249,7 +256,7 @@ export function AdminMembersPage() {
           ) : detail ? (
             <MemberDetail detail={detail} />
           ) : null}
-        </aside>
+        </AdminDetailPane>
       </div>
     </section>
   );

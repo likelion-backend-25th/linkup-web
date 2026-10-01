@@ -6,6 +6,7 @@ import {
   processAdminReport,
 } from '@/api/admin.ts';
 import { isAbortError, toErrorMessage } from '@/api/http.ts';
+import { AdminDetailPane } from '@/components/AdminDetailPane.tsx';
 import { ConfirmDialog } from '@/components/ConfirmDialog.tsx';
 import type {
   AdminOperationResponse,
@@ -253,15 +254,15 @@ export function AdminReportsPage() {
             className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm outline-none focus:border-linkup"
           >
             <option value="">처리 상태 전체</option>
+            <option value="RESOLVED">처리 완료</option>
             <option value="WAIT">처리 대기</option>
             <option value="REJECTED">반려</option>
-            <option value="RESOLVED">처리 완료</option>
           </select>
         </div>
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col border-b border-zinc-100 lg:border-r lg:border-b-0">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col border-b border-zinc-100 lg:border-b-0">
           <div className="linkup-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
             {listLoading && reports.length === 0 ? (
               <p className="px-5 py-8 text-sm text-zinc-400">신고 목록을 불러오는 중...</p>
@@ -332,7 +333,7 @@ export function AdminReportsPage() {
           </div>
         </div>
 
-        <aside className="linkup-scrollbar min-h-0 w-full overflow-y-auto p-5 lg:w-80 lg:shrink-0">
+        <AdminDetailPane label="신고 상세">
           <h2 className="text-base font-semibold text-zinc-900">신고 상세</h2>
           {selectedId === null ? (
             <p className="mt-4 text-sm text-zinc-400">목록에서 신고를 선택하세요.</p>
@@ -348,7 +349,7 @@ export function AdminReportsPage() {
               onProcess={setConfirmStatus}
             />
           ) : null}
-        </aside>
+        </AdminDetailPane>
       </div>
 
       {confirmStatus !== null && (
@@ -411,7 +412,7 @@ function ReportDetail({
 
   return (
     <div className="mt-4">
-      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-3 text-sm">
+      <dl className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-3 text-sm">
         <dt className="text-zinc-400">신고 유형</dt>
         <dd className="text-zinc-800">{targetTypeLabel(detail.targetType)}</dd>
         <dt className="text-zinc-400">신고자</dt>
@@ -421,9 +422,9 @@ function ReportDetail({
         <dt className="text-zinc-400">신고 사유</dt>
         <dd className="text-zinc-800">{detail.reason}</dd>
         <dt className="text-zinc-400">신고 내용</dt>
-        <dd className="whitespace-pre-wrap text-zinc-800">{displayText(detail.content)}</dd>
+        <dd className="min-w-0 whitespace-pre-wrap break-all text-zinc-800">{displayText(detail.content)}</dd>
         <dt className="text-zinc-400">신고 상세</dt>
-        <dd className="whitespace-pre-wrap text-zinc-800">{displayText(detail.reportContent)}</dd>
+        <dd className="min-w-0 whitespace-pre-wrap break-all text-zinc-800">{displayText(detail.reportContent)}</dd>
         <dt className="text-zinc-400">신고 날짜</dt>
         <dd className="text-zinc-800">{formatDateTime(detail.createdAt)}</dd>
         <dt className="text-zinc-400">처리 상태</dt>

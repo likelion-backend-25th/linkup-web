@@ -9,7 +9,6 @@ import { AdminPaymentsPage } from '@/pages/admin/AdminPaymentsPage.tsx';
 import { AdminReportsPage } from '@/pages/admin/AdminReportsPage.tsx';
 import { LoginPage } from '@/pages/LoginPage.tsx';
 import { OAuthCallbackPage } from '@/pages/OAuthCallbackPage.tsx';
-import { PlaceholderPage } from '@/pages/PlaceholderPage.tsx';
 import { PostCreatePage } from '@/pages/PostCreatePage.tsx';
 import { PostDetailPage } from '@/pages/PostDetailPage.tsx';
 import { FollowListPage } from '@/pages/FollowListPage.tsx';
@@ -42,7 +41,6 @@ export default function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/profile/edit" element={<ProfileEditPage />} />
             <Route path="/profile/follows" element={<FollowListPage />} />
-            <Route path="/notifications" element={<PlaceholderPage title="알림" />} />
             <Route element={<RequireAdmin />}>
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<Navigate to="members" replace />} />
