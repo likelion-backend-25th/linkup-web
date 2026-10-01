@@ -118,8 +118,8 @@ function isAdminPaymentDetail(value: unknown): value is AdminPaymentDetailRespon
 
   return (
     typeof value.paymentMethod === 'string' &&
-    typeof value.merchantUid === 'string' &&
-    (value.impUid === null || typeof value.impUid === 'string') &&
+    typeof value.orderId === 'string' &&
+    typeof value.paymentKey === 'string' &&
     typeof value.sellerId === 'string' &&
     typeof value.subStartDate === 'string' &&
     (value.subEndDate === null || typeof value.subEndDate === 'string') &&

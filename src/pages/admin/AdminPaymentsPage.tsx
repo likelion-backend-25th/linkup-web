@@ -25,7 +25,7 @@ const emptyQuery: PaymentQuery = {
 const paymentStatusLabel: Record<string, string> = {
   PAID: '결제 완료',
   FAILED: '결제 실패',
-  CANCELLED: '결제 환불',
+  CANCELED: '결제 취소',
 };
 
 const subStatusLabel: Record<string, string> = {
@@ -48,7 +48,7 @@ function paymentStatusClass(status: string): string {
   if (status === 'FAILED') {
     return 'bg-red-600 text-white';
   }
-  if (status === 'CANCELLED') {
+  if (status === 'CANCELED') {
     return 'bg-zinc-700 text-white';
   }
   return 'bg-zinc-700 text-white';
@@ -254,10 +254,6 @@ function PaymentPeriodPicker({
   );
 }
 
-function displayText(value: string | null): string {
-  return value === null || value === '' ? '-' : value;
-}
-
 function displayDate(value: string | null): string {
   return value ? formatDateTime(value) : '-';
 }
@@ -381,7 +377,7 @@ export function AdminPaymentsPage() {
             <option value="">결제 상태 전체</option>
             <option value="PAID">결제 완료</option>
             <option value="FAILED">결제 실패</option>
-            <option value="CANCELLED">결제 환불</option>
+            <option value="CANCELED">결제 취소</option>
           </select>
           <PaymentPeriodPicker
             startDate={draft.startDate}
@@ -511,10 +507,10 @@ function PaymentDetail({ detail }: { detail: AdminPaymentDetailResponse }) {
         </dd>
         <dt className="text-zinc-400">결제 수단</dt>
         <dd className="text-zinc-800">{detail.paymentMethod}</dd>
-        <dt className="text-zinc-400">Merchant UID</dt>
-        <dd className="break-all text-zinc-800">{detail.merchantUid}</dd>
-        <dt className="text-zinc-400">IMP UID</dt>
-        <dd className="break-all text-zinc-800">{displayText(detail.impUid)}</dd>
+        <dt className="text-zinc-400">주문 번호</dt>
+        <dd className="break-all text-zinc-800">{detail.orderId}</dd>
+        <dt className="text-zinc-400">결제 키</dt>
+        <dd className="break-all text-zinc-800">{detail.paymentKey}</dd>
       </DetailSection>
       <DetailSection title="구매자 정보">
         <dt className="text-zinc-400">구매자 닉네임</dt>
