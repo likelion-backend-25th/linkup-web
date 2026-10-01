@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, type RefObject } from 'react';
 import { PostCard } from '@/components/PostCard.tsx';
 import { useFollowingFeed, type FeedType } from '@/hooks/useFollowingFeed.ts';
+import { useFeedViewStore } from '@/stores/useFeedViewStore.ts';
 import type { PostFeedItem } from '@/types/feed.ts';
 
 interface FollowingFeedListProps {
@@ -20,10 +21,71 @@ export function FollowingFeedList({
 }: FollowingFeedListProps) {
   const { posts, hasNext, loading, error, loadMore } = useFollowingFeed(enabled, feedType);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const restoredRef = useRef(false);
 
   useEffect(() => {
     onPostsChange?.(posts);
   }, [onPostsChange, posts]);
+
+  useLayoutEffect(() => {
+    const el = scrollRoot.current;
+    if (!el || posts.length === 0 || restoredRef.current) {
+      return;
+    }
+
+    const top = useFeedViewStore.getState().scrollTop;
+    if (top <= 0) {
+      restoredRef.current = true;
+      return;
+    }
+
+    // 이미지 로드 전엔 높이가 부족해서 스크롤이 잘리므로, 목표 위치까지 반복해서 맞춘다.
+    let cancelled = false;
+
+    function apply() {
+      if (cancelled || !el) {
+        return;
+      }
+      el.scrollTop = top;
+    }
+
+    apply();
+
+    const images = [...el.querySelectorAll('img')];
+    const pending = images.filter((image) => !image.complete);
+
+    function finish() {
+      apply();
+      restoredRef.current = true;
+    }
+
+    if (pending.length === 0) {
+      finish();
+      return;
+    }
+
+    function onImageSettled() {
+      apply();
+      if (images.every((image) => image.complete)) {
+        finish();
+      }
+    }
+
+    for (const image of pending) {
+      image.addEventListener('load', onImageSettled);
+      image.addEventListener('error', onImageSettled);
+    }
+    const timer = window.setTimeout(finish, 800);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+      for (const image of pending) {
+        image.removeEventListener('load', onImageSettled);
+        image.removeEventListener('error', onImageSettled);
+      }
+    };
+  }, [posts.length, scrollRoot]);
 
   useEffect(() => {
     const root = scrollRoot.current;

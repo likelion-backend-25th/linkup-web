@@ -1,86 +1,31 @@
-import { useState } from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { Navigate, useNavigate } from 'react-router';
-import { loginByEmail } from '@/api/auth.ts';
-import { toErrorMessage } from '@/api/http.ts';
+import { Navigate } from 'react-router';
 import { LinkUpSideNav } from '@/components/LinkUpSideNav.tsx';
 import { LoginIntroPanel } from '@/components/LoginIntroPanel.tsx';
 import { SocialLoginButtons } from '@/components/SocialLoginButtons.tsx';
-import { loginSchema, type LoginFormValues } from '@/pages/loginSchema.ts';
 import { useAuthStore } from '@/stores/useAuthStore.ts';
 
 export function LoginPage() {
-  const navigate = useNavigate();
   const accessToken = useAuthStore((state) => state.accessToken);
-  const setSession = useAuthStore((state) => state.setSession);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-  });
 
   if (accessToken) {
     return <Navigate to="/" replace />;
   }
 
-  async function onSubmit(values: LoginFormValues) {
-    setSubmitError(null);
-    try {
-      const session = await loginByEmail(values.email);
-      setSession(session.tokens, session.profile);
-      await navigate('/');
-    } catch (caught: unknown) {
-      setSubmitError(toErrorMessage(caught));
-    }
-  }
-
   return (
-    <div className="min-h-svh bg-canvas p-4 md:p-6">
-      <div className="mx-auto grid min-h-[calc(100svh-2rem)] max-w-6xl gap-4 md:min-h-[calc(100svh-3rem)] lg:grid-cols-[13rem_minmax(20rem,1fr)_minmax(22rem,1.15fr)]">
-        <LinkUpSideNav />
+    <div className="min-h-svh bg-canvas p-3 md:p-5 lg:h-svh lg:overflow-hidden">
+      <div className="mx-auto grid min-h-[calc(100svh-1.5rem)] max-w-[92rem] gap-4 md:min-h-[calc(100svh-2.5rem)] lg:h-full lg:min-h-0 lg:grid-cols-[14rem_minmax(20rem,24rem)_minmax(0,1fr)]">
+        <div className="lg:h-full lg:min-h-0">
+          <LinkUpSideNav />
+        </div>
 
-        <main className="flex flex-col items-center justify-center rounded-2xl bg-white px-6 py-12 shadow-sm">
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-900">
-            LinkUp
-          </h1>
-          <p className="mt-2 mb-8 max-w-[16rem] text-center text-sm text-zinc-500">
+        <main className="flex min-h-[28rem] flex-col items-center rounded-2xl bg-white px-8 py-12 shadow-sm lg:h-full lg:min-h-0">
+          <h1 className="mt-6 text-3xl font-bold tracking-tight text-zinc-900">LinkUp</h1>
+          <p className="mt-2 mb-10 text-center text-sm text-zinc-500">
             취향이 맞는 사람들과 이어지는 공간입니다.
           </p>
-
-          <SocialLoginButtons />
-
-          <form
-            className="mt-8 flex w-full max-w-xs flex-col gap-3"
-            onSubmit={handleSubmit(onSubmit)}
-            noValidate
-          >
-            <p className="text-center text-xs text-zinc-400">또는 이메일로 로그인</p>
-            <label className="sr-only" htmlFor="email">
-              이메일
-            </label>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              placeholder="이메일"
-              className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm text-zinc-900 outline-none focus:border-linkup focus:bg-white"
-              {...register('email')}
-            />
-            {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
-            {submitError && <p className="text-sm text-red-500">{submitError}</p>}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="rounded-xl bg-linkup px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#5b4ee8] disabled:opacity-60"
-            >
-              {isSubmitting ? '로그인 중...' : '이메일로 로그인'}
-            </button>
-          </form>
+          <div className="w-full">
+            <SocialLoginButtons />
+          </div>
         </main>
 
         <LoginIntroPanel />

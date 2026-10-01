@@ -20,8 +20,8 @@ export function RootLayout() {
   }, [accessToken, setProfile]);
 
   return (
-    <div className="h-svh overflow-hidden bg-canvas p-4 md:p-6">
-      <div className="mx-auto flex h-full max-w-6xl flex-col gap-4 lg:flex-row">
+    <div className="h-svh overflow-hidden bg-canvas p-3 md:p-5">
+      <div className="mx-auto flex h-full max-w-[92rem] flex-col gap-4 lg:flex-row">
         <div className="lg:h-full lg:w-56 lg:shrink-0">
           <LinkUpSideNav />
         </div>

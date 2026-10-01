@@ -444,7 +444,7 @@ export function PostCreatePage() {
           onChange={(event) => setContent(event.target.value)}
           maxLength={MAX_CONTENT}
           rows={6}
-          placeholder="오늘도 좋은 하루 보내셨나요? ^^"
+          placeholder={`최대 ${MAX_CONTENT}자까지 작성할 수 있습니다.`}
           className="w-full resize-none rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm outline-none focus:border-linkup focus:bg-white"
         />
         <p className="absolute right-3 bottom-3 text-xs text-zinc-400">
