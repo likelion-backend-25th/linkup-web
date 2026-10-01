@@ -1,12 +1,22 @@
+import type { ReactNode } from 'react';
+
 interface AlertDialogProps {
   title: string;
   message: string;
   detail?: string | null;
   pending?: boolean;
+  children?: ReactNode;
   onClose: () => void;
 }
 
-export function AlertDialog({ title, message, detail, pending = false, onClose }: AlertDialogProps) {
+export function AlertDialog({
+  title,
+  message,
+  detail,
+  pending = false,
+  children,
+  onClose,
+}: AlertDialogProps) {
   return (
     <div
       className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4"
@@ -28,6 +38,7 @@ export function AlertDialog({ title, message, detail, pending = false, onClose }
           {message}
         </p>
         {detail && <p className="mt-1 text-xs text-zinc-400">{detail}</p>}
+        {children}
         <div className="mt-5 flex justify-end">
           <button
             type="button"

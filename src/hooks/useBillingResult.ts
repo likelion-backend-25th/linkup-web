@@ -17,11 +17,13 @@ export interface BillingDialog {
   detail: string | null;
   pending: boolean;
   succeeded: boolean;
+  payment: CreateSubscriptionResponse | null;
 }
 
 interface RequestResult {
   authKey: string;
   error: string | null;
+  payment: CreateSubscriptionResponse | null;
 }
 
 // authKey 는 1회용이라 StrictMode 이중 effect 에서도 POST 가 한 번만 나가도록 authKey 단위로 공유한다.
@@ -57,14 +59,14 @@ export function useBillingResult(memberId: number | null) {
       inflight.set(authKey, request);
     }
     request
-      .then(() => {
+      .then((payment) => {
         if (!cancelled) {
-          setResult({ authKey, error: null });
+          setResult({ authKey, error: null, payment });
         }
       })
       .catch((caught: unknown) => {
         if (!cancelled) {
-          setResult({ authKey, error: toErrorMessage(caught) });
+          setResult({ authKey, error: toErrorMessage(caught), payment: null });
         }
       });
 
@@ -88,27 +90,30 @@ export function useBillingResult(memberId: number | null) {
       dialog = failure('로그인이 필요합니다. 다시 로그인 후 시도해 주세요.', null);
     } else if (result?.authKey !== authKey) {
       dialog = {
-        title: '구독을 등록하는 중',
-        message: '잠시만 기다려 주세요.',
+        title: '결제를 진행하는 중',
+        message: '카드 등록과 첫 결제를 처리하고 있어요. 잠시만 기다려 주세요.',
         detail: null,
         pending: true,
         succeeded: false,
+        payment: null,
       };
     } else if (result.error) {
       dialog = {
-        title: '구독 등록에 실패했어요',
+        title: '구독 결제에 실패했어요',
         message: result.error,
         detail: null,
         pending: false,
         succeeded: false,
+        payment: null,
       };
     } else {
       dialog = {
-        title: '구독이 완료되었어요',
-        message: '카드가 등록되어 매월 자동으로 결제됩니다.',
+        title: '결제가 완료되었어요',
+        message: '구독이 시작되었습니다. 다음 달부터 등록한 카드로 자동 결제됩니다.',
         detail: null,
         pending: false,
         succeeded: true,
+        payment: result.payment,
       };
     }
   }
@@ -126,5 +131,12 @@ export function useBillingResult(memberId: number | null) {
 }
 
 function failure(message: string, code: string | null): BillingDialog {
-  return { title: '카드 등록에 실패했어요', message, detail: code, pending: false, succeeded: false };
+  return {
+    title: '카드 등록에 실패했어요',
+    message,
+    detail: code,
+    pending: false,
+    succeeded: false,
+    payment: null,
+  };
 }

@@ -1436,6 +1436,29 @@
         }
       }
     },
+    "/api/v1/member/recommendations": {
+      "get": {
+        "tags": [
+          "member-controller"
+        ],
+        "operationId": "getRecommendedMembers",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RecommendedMemberResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/member/blocks": {
       "get": {
         "tags": [
@@ -1933,6 +1956,19 @@
           "subscriptionId": {
             "type": "integer",
             "format": "int64"
+          },
+          "orderName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "totalAmount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "approvedAt": {
+            "type": "string"
           }
         }
       },
@@ -2452,6 +2488,10 @@
           "role": {
             "type": "string"
           },
+          "postCount": {
+            "type": "integer",
+            "format": "int32"
+          },
           "followerCount": {
             "type": "integer",
             "format": "int32"
@@ -2460,12 +2500,36 @@
             "type": "integer",
             "format": "int32"
           },
-          "postCount": {
+          "subscribedStatus": {
+            "type": "string"
+          }
+        }
+      },
+      "RecommendedMemberResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "uniqueId": {
+            "type": "string"
+          },
+          "profileImage": {
+            "type": "string"
+          },
+          "introduction": {
+            "type": "string"
+          },
+          "followerCount": {
             "type": "integer",
             "format": "int32"
           },
-          "subscribedStatus": {
-            "type": "string"
+          "following": {
+            "type": "boolean"
           }
         }
       },
