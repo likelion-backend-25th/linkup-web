@@ -36,6 +36,25 @@ export interface CreateSubscriptionResponse {
   approvedAt: string | null;
 }
 
+/** GET /api/v1/subscriptions/cancel/{id} 응답 (CheckBillingDateResponse) */
+export interface CheckBillingDateResponse {
+  /** 가장 최근 결제일. 24시간 이내면 환불 가능 */
+  billingDate: string;
+}
+
+/** POST /api/v1/subscriptions/cancel/{id}/refund 응답 (RefundSubscriptionResponse) */
+export interface RefundSubscriptionResponse {
+  totalAmount: number;
+  /** 토스 환불 처리 시각 원문 (ISO 8601 + 오프셋) */
+  canceledAt: string | null;
+}
+
+/** POST /api/v1/subscriptions/cancel/{id} 응답 (CancelSubscriptionResponse) */
+export interface CancelSubscriptionResponse {
+  /** 구독 혜택이 끝나는 날짜 */
+  endDate: string | null;
+}
+
 /** GET /api/v1/subscriptions/{id} 응답 (SubscriptionDetailResponse) */
 export interface SubscriptionDetailResponse {
   subscriptionId: number;

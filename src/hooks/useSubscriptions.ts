@@ -60,5 +60,12 @@ export function useSubscriptions(accessToken: string) {
     return () => controller.abort();
   }, [loadMore]);
 
-  return { subscriptions, totalCount, hasNext, loading, error, loadMore };
+  // 해지(CANCELED)·환불(REMOVED) 성공 시 목록을 다시 받지 않고 해당 항목 상태만 바꾼다.
+  const updateStatus = useCallback((subscriptionId: number, status: string) => {
+    setSubscriptions((current) =>
+      current.map((item) => (item.subscriptionId === subscriptionId ? { ...item, status } : item)),
+    );
+  }, []);
+
+  return { subscriptions, totalCount, hasNext, loading, error, loadMore, updateStatus };
 }
