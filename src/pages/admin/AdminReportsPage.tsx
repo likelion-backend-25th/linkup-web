@@ -14,39 +14,43 @@ import type {
 } from '@/types/admin.ts';
 import { formatDateTime } from '@/utils/formatDateTime.ts';
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 20;
 
+type ReportTargetType = '' | 'POST' | 'REPLY';
 type ReportProcessStatus = 'REJECTED' | 'RESOLVED';
 
-const processLabel: Record<ReportProcessStatus, string> = {
-  REJECTED: '기각',
-  RESOLVED: '처리',
+const targetTabs: { value: ReportTargetType; label: string }[] = [
+  { value: '', label: '전체 신고' },
+  { value: 'POST', label: '게시글 신고' },
+  { value: 'REPLY', label: '댓글 신고' },
+];
+
+const reportStatusLabel: Record<string, string> = {
+  WAIT: '처리 대기',
+  REJECTED: '반려',
+  RESOLVED: '처리 완료',
 };
 
-function reportStatusLabel(status: string): string {
-  if (status === 'PENDING') {
-    return '대기 중';
-  }
-  if (status === 'REJECTED') {
-    return '기각';
-  }
-  if (status === 'RESOLVED') {
-    return '처리 완료';
-  }
-  return status;
+const processLabel: Record<ReportProcessStatus, string> = {
+  REJECTED: '반려',
+  RESOLVED: '처리 완료',
+};
+
+function statusLabel(status: string): string {
+  return reportStatusLabel[status] ?? status;
 }
 
 function reportStatusClass(status: string): string {
-  if (status === 'PENDING') {
-    return 'bg-amber-100 text-amber-700';
+  if (status === 'WAIT') {
+    return 'bg-amber-500 text-white';
   }
   if (status === 'REJECTED') {
-    return 'bg-zinc-100 text-zinc-500';
+    return 'bg-red-600 text-white';
   }
   if (status === 'RESOLVED') {
-    return 'bg-linkup text-white';
+    return 'bg-emerald-600 text-white';
   }
-  return 'bg-zinc-100 text-zinc-600';
+  return 'bg-zinc-700 text-white';
 }
 
 function targetTypeLabel(targetType: string): string {
@@ -59,16 +63,24 @@ function targetTypeLabel(targetType: string): string {
   return targetType;
 }
 
+function displayText(value: string | null): string {
+  return value === null || value === '' ? '-' : value;
+}
+
 function StatusBadge({ status }: { status: string }) {
   return (
-    <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${reportStatusClass(status)}`}>
-      {reportStatusLabel(status)}
+    <span
+      className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${reportStatusClass(status)}`}
+    >
+      {statusLabel(status)}
     </span>
   );
 }
 
 export function AdminReportsPage() {
-  const [page, setPage] = useState(0);
+  const [targetType, setTargetType] = useState<ReportTargetType>('');
+  const [status, setStatus] = useState('');
+  const [page, setPage] = useState(1);
   const [reloadKey, setReloadKey] = useState(0);
   const [summary, setSummary] = useState<AdminOperationResponse | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
@@ -87,10 +99,7 @@ export function AdminReportsPage() {
   useEffect(() => {
     const controller = new AbortController();
     setSummaryLoading(true);
-    setListLoading(true);
     setSummaryError(null);
-    setListError(null);
-    setReports([]);
 
     getAdminReportSummary(controller.signal)
       .then((data) => setSummary(data))
@@ -105,7 +114,24 @@ export function AdminReportsPage() {
         }
       });
 
-    getAdminReports({ page, size: PAGE_SIZE }, controller.signal)
+    return () => controller.abort();
+  }, [reloadKey]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setListLoading(true);
+    setListError(null);
+    setReports([]);
+
+    getAdminReports(
+      {
+        targetType: targetType || undefined,
+        status: status || undefined,
+        page,
+        size: PAGE_SIZE,
+      },
+      controller.signal,
+    )
       .then((data) => setReports(data))
       .catch((caught: unknown) => {
         if (!isAbortError(caught)) {
@@ -119,7 +145,7 @@ export function AdminReportsPage() {
       });
 
     return () => controller.abort();
-  }, [page, reloadKey]);
+  }, [targetType, status, page, reloadKey]);
 
   useEffect(() => {
     if (selectedId === null) {
@@ -151,6 +177,18 @@ export function AdminReportsPage() {
     return () => controller.abort();
   }, [selectedId, reloadKey]);
 
+  function changeTarget(next: ReportTargetType) {
+    setTargetType(next);
+    setPage(1);
+    setSelectedId(null);
+  }
+
+  function changeStatus(next: string) {
+    setStatus(next);
+    setPage(1);
+    setSelectedId(null);
+  }
+
   async function confirmProcess() {
     if (selectedId === null || confirmStatus === null) {
       return;
@@ -160,6 +198,7 @@ export function AdminReportsPage() {
     try {
       await processAdminReport(selectedId, { status: confirmStatus });
       setConfirmStatus(null);
+      // 처리 후 상세, 목록, 대기 수를 다시 받는다.
       setReloadKey((current) => current + 1);
     } catch (caught: unknown) {
       setProcessError(toErrorMessage(caught));
@@ -177,31 +216,121 @@ export function AdminReportsPage() {
         <h1 className="text-lg font-bold text-zinc-900">신고 관리</h1>
         <div className="mt-4 grid grid-cols-2 gap-3">
           <SummaryStat
-            label="대기 중인 신고"
+            label="처리 대기 신고 수"
             loading={summaryLoading}
             error={summaryError}
             value={summary?.pendingReportCount}
           />
           <SummaryStat
-            label="전체 회원"
+            label="전체 회원 수"
             loading={summaryLoading}
             error={summaryError}
             value={summary?.totalMember}
           />
         </div>
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {targetTabs.map((tab) => {
+            const active = tab.value === targetType;
+            return (
+              <button
+                key={tab.value}
+                type="button"
+                onClick={() => changeTarget(tab.value)}
+                className={
+                  active
+                    ? 'rounded-xl bg-linkup-soft px-3 py-2 text-sm font-medium text-linkup'
+                    : 'rounded-xl px-3 py-2 text-sm font-medium text-zinc-500 hover:bg-zinc-50'
+                }
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+          <select
+            value={status}
+            onChange={(event) => changeStatus(event.target.value)}
+            aria-label="처리 상태"
+            className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm outline-none focus:border-linkup"
+          >
+            <option value="">처리 상태 전체</option>
+            <option value="WAIT">처리 대기</option>
+            <option value="REJECTED">반려</option>
+            <option value="RESOLVED">처리 완료</option>
+          </select>
+        </div>
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <ReportList
-          reports={reports}
-          selectedId={selectedId}
-          loading={listLoading}
-          error={listError}
-          page={page}
-          hasNext={hasNext}
-          onSelect={setSelectedId}
-          onPage={setPage}
-        />
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col border-b border-zinc-100 lg:border-r lg:border-b-0">
+          <div className="linkup-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+            {listLoading && reports.length === 0 ? (
+              <p className="px-5 py-8 text-sm text-zinc-400">신고 목록을 불러오는 중...</p>
+            ) : listError && reports.length === 0 ? (
+              <p className="px-5 py-8 text-sm text-red-500">{listError}</p>
+            ) : reports.length === 0 ? (
+              <p className="px-5 py-8 text-sm text-zinc-400">신고가 없습니다.</p>
+            ) : (
+              <table className="w-full table-fixed text-left text-sm">
+                <thead className="sticky top-0 bg-white text-xs text-zinc-400">
+                  <tr className="border-b border-zinc-100">
+                    <th className="w-24 py-3 pl-6 pr-4 font-medium">신고자</th>
+                    <th className="w-24 px-4 py-3 font-medium">신고 대상</th>
+                    <th className="w-28 px-4 py-3 font-medium">신고 사유</th>
+                    <th className="px-4 py-3 font-medium">신고 내용</th>
+                    <th className="w-44 whitespace-nowrap px-4 py-3 font-medium">신고 날짜</th>
+                    <th className="w-28 whitespace-nowrap py-3 pl-4 pr-5 font-medium">처리 상태</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reports.map((report) => {
+                    const selected = report.id === selectedId;
+                    return (
+                      <tr
+                        key={report.id}
+                        onClick={() => setSelectedId(report.id)}
+                        className={
+                          selected ? 'cursor-pointer bg-linkup-soft' : 'cursor-pointer hover:bg-zinc-50'
+                        }
+                      >
+                        <td className="truncate py-3 pl-6 pr-4 text-zinc-900">{report.reporterName}</td>
+                        <td className="truncate px-4 py-3 text-zinc-700">
+                          {displayText(report.targetUserName)}
+                        </td>
+                        <td className="truncate px-4 py-3 text-zinc-700">{report.reason}</td>
+                        <td className="truncate px-4 py-3 text-zinc-700">{displayText(report.content)}</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-zinc-500">
+                          {formatDateTime(report.createdAt)}
+                        </td>
+                        <td className="whitespace-nowrap py-3 pl-4 pr-5">
+                          <StatusBadge status={report.status} />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+          <div className="flex shrink-0 items-center justify-end gap-2 border-t border-zinc-100 px-4 py-3">
+            <button
+              type="button"
+              disabled={page <= 1 || listLoading}
+              onClick={() => setPage((current) => current - 1)}
+              className="rounded-xl border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 disabled:opacity-60"
+            >
+              이전
+            </button>
+            <span className="text-sm text-zinc-500">{page}</span>
+            <button
+              type="button"
+              disabled={!hasNext || listLoading}
+              onClick={() => setPage((current) => current + 1)}
+              className="rounded-xl border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 disabled:opacity-60"
+            >
+              다음
+            </button>
+          </div>
+        </div>
 
         <aside className="linkup-scrollbar min-h-0 w-full overflow-y-auto p-5 lg:w-80 lg:shrink-0">
           <h2 className="text-base font-semibold text-zinc-900">신고 상세</h2>
@@ -237,104 +366,6 @@ export function AdminReportsPage() {
         />
       )}
     </section>
-  );
-}
-
-function ReportList({
-  reports,
-  selectedId,
-  loading,
-  error,
-  page,
-  hasNext,
-  onSelect,
-  onPage,
-}: {
-  reports: AdminReportResponse[];
-  selectedId: number | null;
-  loading: boolean;
-  error: string | null;
-  page: number;
-  hasNext: boolean;
-  onSelect: (reportId: number) => void;
-  onPage: (page: number) => void;
-}) {
-  return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col border-b border-zinc-100 lg:border-r lg:border-b-0">
-      <div className="linkup-scrollbar min-h-0 flex-1 overflow-auto">
-        {loading && reports.length === 0 ? (
-          <p className="px-5 py-8 text-sm text-zinc-400">신고 목록을 불러오는 중...</p>
-        ) : error && reports.length === 0 ? (
-          <p className="px-5 py-8 text-sm text-red-500">{error}</p>
-        ) : reports.length === 0 ? (
-          <p className="px-5 py-8 text-sm text-zinc-400">신고가 없습니다.</p>
-        ) : (
-          <table className="w-full min-w-[48rem] text-left text-sm">
-            <thead className="sticky top-0 bg-white text-xs text-zinc-400">
-              <tr className="border-b border-zinc-100">
-                <th className="px-4 py-3 font-medium">신고 ID</th>
-                <th className="px-4 py-3 font-medium">신고 대상</th>
-                <th className="px-4 py-3 font-medium">신고자</th>
-                <th className="px-4 py-3 font-medium">대상 사용자</th>
-                <th className="px-4 py-3 font-medium">신고 사유</th>
-                <th className="px-4 py-3 font-medium">신고 내용</th>
-                <th className="px-4 py-3 font-medium">신고 일시</th>
-                <th className="px-4 py-3 font-medium">상태</th>
-              </tr>
-            </thead>
-            <tbody>
-              {reports.map((report) => {
-                const selected = report.id === selectedId;
-                return (
-                  <tr
-                    key={report.id}
-                    onClick={() => onSelect(report.id)}
-                    className={
-                      selected ? 'cursor-pointer bg-linkup-soft' : 'cursor-pointer hover:bg-zinc-50'
-                    }
-                  >
-                    <td className="px-4 py-3 text-zinc-900">{report.id}</td>
-                    <td className="px-4 py-3 text-zinc-700">{targetTypeLabel(report.targetType)}</td>
-                    <td className="px-4 py-3 text-zinc-700">{report.reporterName}</td>
-                    <td className="px-4 py-3 text-zinc-700">{report.targetUserName}</td>
-                    <td className="max-w-40 truncate px-4 py-3 text-zinc-700">{report.reason}</td>
-                    <td className="max-w-48 truncate px-4 py-3 text-zinc-700">{report.content}</td>
-                    <td className="whitespace-nowrap px-4 py-3 text-zinc-500">
-                      {formatDateTime(report.createdAt)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={report.status} />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </div>
-      {error && reports.length > 0 ? (
-        <p className="px-5 py-2 text-xs text-red-500">{error}</p>
-      ) : null}
-      <div className="flex shrink-0 items-center justify-end gap-2 border-t border-zinc-100 px-4 py-3">
-        <button
-          type="button"
-          disabled={page === 0 || loading}
-          onClick={() => onPage(page - 1)}
-          className="rounded-xl border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 disabled:opacity-60"
-        >
-          이전
-        </button>
-        <span className="text-sm text-zinc-500">{page + 1}</span>
-        <button
-          type="button"
-          disabled={!hasNext || loading}
-          onClick={() => onPage(page + 1)}
-          className="rounded-xl border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 disabled:opacity-60"
-        >
-          다음
-        </button>
-      </div>
-    </div>
   );
 }
 
@@ -376,55 +407,51 @@ function ReportDetail({
   processing: boolean;
   onProcess: (status: ReportProcessStatus) => void;
 }) {
+  const canProcess = detail.status === 'WAIT';
+
   return (
     <div className="mt-4">
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-3 text-sm">
-        <dt className="text-zinc-400">신고 ID</dt>
-        <dd className="text-zinc-800">{detail.id}</dd>
-        <dt className="text-zinc-400">신고 대상</dt>
+        <dt className="text-zinc-400">신고 유형</dt>
         <dd className="text-zinc-800">{targetTypeLabel(detail.targetType)}</dd>
-        <dt className="text-zinc-400">게시글 ID</dt>
-        <dd className="text-zinc-800">{detail.postId}</dd>
-        <dt className="text-zinc-400">댓글 ID</dt>
-        <dd className="text-zinc-800">{detail.replyId}</dd>
-        <dt className="text-zinc-400">대상 회원 ID</dt>
-        <dd className="text-zinc-800">{detail.targetMemberId}</dd>
         <dt className="text-zinc-400">신고자</dt>
         <dd className="text-zinc-800">{detail.reporterName}</dd>
-        <dt className="text-zinc-400">대상 사용자</dt>
-        <dd className="text-zinc-800">{detail.targetUserName}</dd>
+        <dt className="text-zinc-400">신고 대상</dt>
+        <dd className="text-zinc-800">{displayText(detail.targetUserName)}</dd>
         <dt className="text-zinc-400">신고 사유</dt>
         <dd className="text-zinc-800">{detail.reason}</dd>
         <dt className="text-zinc-400">신고 내용</dt>
-        <dd className="whitespace-pre-wrap text-zinc-800">{detail.content}</dd>
+        <dd className="whitespace-pre-wrap text-zinc-800">{displayText(detail.content)}</dd>
         <dt className="text-zinc-400">신고 상세</dt>
-        <dd className="whitespace-pre-wrap text-zinc-800">{detail.reportContent}</dd>
-        <dt className="text-zinc-400">신고 일시</dt>
+        <dd className="whitespace-pre-wrap text-zinc-800">{displayText(detail.reportContent)}</dd>
+        <dt className="text-zinc-400">신고 날짜</dt>
         <dd className="text-zinc-800">{formatDateTime(detail.createdAt)}</dd>
-        <dt className="text-zinc-400">상태</dt>
+        <dt className="text-zinc-400">처리 상태</dt>
         <dd>
           <StatusBadge status={detail.status} />
         </dd>
       </dl>
       {processError ? <p className="mt-4 text-sm text-red-500">{processError}</p> : null}
-      <div className="mt-5 flex gap-2">
-        <button
-          type="button"
-          disabled={processing || detail.status === 'REJECTED'}
-          onClick={() => onProcess('REJECTED')}
-          className="rounded-xl border border-red-500 px-3 py-2 text-sm font-medium text-red-500 disabled:opacity-60"
-        >
-          기각
-        </button>
-        <button
-          type="button"
-          disabled={processing || detail.status === 'RESOLVED'}
-          onClick={() => onProcess('RESOLVED')}
-          className="rounded-xl bg-linkup px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
-        >
-          처리
-        </button>
-      </div>
+      {canProcess ? (
+        <div className="mt-5 flex gap-2">
+          <button
+            type="button"
+            disabled={processing}
+            onClick={() => onProcess('REJECTED')}
+            className="rounded-xl border border-red-500 px-3 py-2 text-sm font-medium text-red-500 disabled:opacity-60"
+          >
+            반려
+          </button>
+          <button
+            type="button"
+            disabled={processing}
+            onClick={() => onProcess('RESOLVED')}
+            className="rounded-xl bg-linkup px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
+          >
+            처리 완료
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

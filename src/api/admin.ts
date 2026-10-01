@@ -38,8 +38,8 @@ function isAdminReport(value: unknown): value is AdminReportResponse {
     typeof value.id === 'number' &&
     typeof value.targetType === 'string' &&
     typeof value.reporterName === 'string' &&
-    typeof value.targetUserName === 'string' &&
-    typeof value.content === 'string' &&
+    (value.targetUserName === null || typeof value.targetUserName === 'string') &&
+    (value.content === null || typeof value.content === 'string') &&
     typeof value.reason === 'string' &&
     typeof value.createdAt === 'string' &&
     typeof value.status === 'string'
@@ -52,10 +52,10 @@ function isAdminReportDetail(value: unknown): value is AdminReportDetailResponse
   }
 
   return (
-    typeof value.postId === 'number' &&
-    typeof value.replyId === 'number' &&
-    typeof value.targetMemberId === 'number' &&
-    typeof value.reportContent === 'string'
+    (value.postId === null || typeof value.postId === 'number') &&
+    (value.replyId === null || typeof value.replyId === 'number') &&
+    (value.targetMemberId === null || typeof value.targetMemberId === 'number') &&
+    (value.reportContent === null || typeof value.reportContent === 'string')
   );
 }
 
@@ -144,12 +144,12 @@ export async function getAdminReports(
   signal?: AbortSignal,
 ): Promise<AdminReportResponse[]> {
   const params = new URLSearchParams();
-  appendQuery(params, query);
-  const search = params.toString();
-  const data = await fetchApiJson(
-    `/api/v1/admin/reports${search === '' ? '' : `?${search}`}`,
-    { signal },
-  );
+  appendQuery(params, {
+    ...query,
+    page: query.page !== undefined && query.page >= 1 ? query.page : 1,
+    size: query.size !== undefined && query.size >= 1 ? query.size : 20,
+  });
+  const data = await fetchApiJson(`/api/v1/admin/reports?${params.toString()}`, { signal });
   return parseList(data, isAdminReport, '신고 목록 형식이 올바르지 않습니다.');
 }
 

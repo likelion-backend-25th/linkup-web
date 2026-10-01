@@ -7,6 +7,22 @@ import { formatDateTime } from '@/utils/formatDateTime.ts';
 
 const PAGE_SIZE = 20;
 
+const memberStatusLabel: Record<string, string> = {
+  ACTIVE: '온라인',
+  INACTIVE: '오프라인',
+  SUSPENDED: 'STOP',
+};
+
+const creatorStatusLabel: Record<string, string> = {
+  CREATOR: '크리에이터',
+  USER: '일반 회원',
+  NONE: '-',
+};
+
+function statusLabel(labels: Record<string, string>, value: string): string {
+  return labels[value] ?? value;
+}
+
 interface MemberQuery {
   keyword: string;
   memberStatus: string;
@@ -185,8 +201,12 @@ export function AdminMembersPage() {
                           </span>
                         </td>
                         <td className="px-4 py-3 text-zinc-700">@{member.userId}</td>
-                        <td className="px-4 py-3 text-zinc-700">{member.memberStatus}</td>
-                        <td className="px-4 py-3 text-zinc-700">{member.creatorStatus}</td>
+                        <td className="px-4 py-3 text-zinc-700">
+                          {statusLabel(memberStatusLabel, member.memberStatus)}
+                        </td>
+                        <td className="px-4 py-3 text-zinc-700">
+                          {statusLabel(creatorStatusLabel, member.creatorStatus)}
+                        </td>
                         <td className="whitespace-nowrap px-4 py-3 text-zinc-500">
                           {formatDateTime(member.createdAt)}
                         </td>
@@ -249,9 +269,9 @@ function MemberDetail({ detail }: { detail: AdminMemberDetailResponse }) {
         <dt className="text-zinc-400">가입일</dt>
         <dd className="text-zinc-800">{formatDateTime(detail.createdAt)}</dd>
         <dt className="text-zinc-400">회원 상태</dt>
-        <dd className="text-zinc-800">{detail.memberStatus}</dd>
+        <dd className="text-zinc-800">{statusLabel(memberStatusLabel, detail.memberStatus)}</dd>
         <dt className="text-zinc-400">크리에이터</dt>
-        <dd className="text-zinc-800">{detail.creatorStatus}</dd>
+        <dd className="text-zinc-800">{statusLabel(creatorStatusLabel, detail.creatorStatus)}</dd>
         <dt className="text-zinc-400">월 구독 가격</dt>
         <dd className="text-zinc-800">
           {detail.subscriptionPrice === null
