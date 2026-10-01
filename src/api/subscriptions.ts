@@ -1,8 +1,11 @@
 import { fetchApiJson } from '@/api/http.ts';
 import type {
+  CancelSubscriptionResponse,
+  CheckBillingDateResponse,
   CreateSubscriptionRequest,
   CreateSubscriptionResponse,
   PagingSubListResponse,
+  RefundSubscriptionResponse,
   SubscribeCreatorListResponse,
   SubscriptionDetailResponse,
 } from '@/types/subscription.ts';
@@ -115,6 +118,56 @@ export async function fetchSubscriptionDetail(
     endDate: data.endDate ?? null,
     nextBillingAt: data.nextBillingAt ?? null,
   };
+}
+
+export async function fetchCancelBillingDate(
+  subscriptionId: number,
+  accessToken: string,
+  signal?: AbortSignal,
+): Promise<CheckBillingDateResponse> {
+  const data = await fetchApiJson(`/api/v1/subscriptions/cancel/${subscriptionId}`, {
+    accessToken,
+    signal,
+  });
+  if (!isRecord(data) || typeof data.billingDate !== 'string') {
+    throw new Error('결제일 응답 형식이 올바르지 않습니다.');
+  }
+  return { billingDate: data.billingDate };
+}
+
+export async function refundSubscription(
+  subscriptionId: number,
+  accessToken: string,
+): Promise<RefundSubscriptionResponse> {
+  const data = await fetchApiJson(`/api/v1/subscriptions/cancel/${subscriptionId}/refund`, {
+    method: 'POST',
+    accessToken,
+  });
+  if (!isRecord(data) || typeof data.totalAmount !== 'number' || !isNullableString(data.canceledAt)) {
+    throw new Error('환불 응답 형식이 올바르지 않습니다.');
+  }
+  return {
+    totalAmount: data.totalAmount,
+    canceledAt: typeof data.canceledAt === 'string' ? data.canceledAt : null,
+  };
+}
+
+export async function cancelSubscription(
+  subscriptionId: number,
+  accessToken: string,
+): Promise<CancelSubscriptionResponse> {
+  const data = await fetchApiJson(`/api/v1/subscriptions/cancel/${subscriptionId}`, {
+    method: 'POST',
+    accessToken,
+  });
+  // 문서상 204 로 표기돼 있어 본문이 없을 수도 있다.
+  if (data === null) {
+    return { endDate: null };
+  }
+  if (!isRecord(data) || !isNullableString(data.endDate)) {
+    throw new Error('구독 해지 응답 형식이 올바르지 않습니다.');
+  }
+  return { endDate: typeof data.endDate === 'string' ? data.endDate : null };
 }
 
 export async function createSubscription(

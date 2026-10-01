@@ -72,8 +72,11 @@ export function ProfilePage() {
   const isOwnView = !isMemberProfile || profile?.id === routeMemberId;
   const billing = useBillingResult(memberId);
   const isCreator = isCreatorAccount({ role: member?.role });
+  // REMOVED 는 구독이 완전히 끝난 상태라 미구독(null)과 같이 다시 구독할 수 있게 한다.
+  const memberSubscribedStatus =
+    member?.subscribedStatus === 'REMOVED' ? null : (member?.subscribedStatus ?? null);
   const subscriptionStatus =
-    billing.dialog?.succeeded === true ? 'ACTIVE' : (member?.subscribedStatus ?? null);
+    billing.dialog?.succeeded === true ? 'ACTIVE' : memberSubscribedStatus;
   // 회원 정보(구독 상태 포함) 로딩 전에 눌러 중복 구독되지 않도록 막는다. (비로그인은 로그인 유도를 위해 허용)
   const subscriptionChecking = Boolean(accessToken) && !isOwnView && member === null;
   const owner =
