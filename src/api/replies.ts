@@ -40,10 +40,21 @@ function isReply(value: unknown): value is ReplyResponse {
   );
 }
 
+function hiddenOf(value: { hidden?: unknown; isHidden?: unknown }): boolean {
+  if (typeof value.hidden === 'boolean') {
+    return value.hidden;
+  }
+  if (typeof value.isHidden === 'boolean') {
+    return value.isHidden;
+  }
+  return false;
+}
+
 function toReply(value: ReplyResponse): ReplyResponse {
   return {
     ...value,
     likedByMe: likedByMeOf(value),
+    hidden: hiddenOf(value),
   };
 }
 

@@ -13,6 +13,7 @@ import type {
   AdminReportDetailResponse,
   AdminReportResponse,
 } from '@/types/admin.ts';
+import { useFeedViewStore } from '@/stores/useFeedViewStore.ts';
 import { formatDateTime } from '@/utils/formatDateTime.ts';
 
 const PAGE_SIZE = 20;
@@ -66,6 +67,19 @@ function targetTypeLabel(targetType: string): string {
 
 function displayText(value: string | null): string {
   return value === null || value === '' ? '-' : value;
+}
+
+function TargetTypeBadge({ targetType }: { targetType: string }) {
+  const isPost = targetType === 'POST';
+  return (
+    <span
+      className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
+        isPost ? 'bg-linkup-soft text-linkup' : 'bg-zinc-200 text-zinc-700'
+      }`}
+    >
+      {targetTypeLabel(targetType)}
+    </span>
+  );
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -198,6 +212,10 @@ export function AdminReportsPage() {
     setProcessError(null);
     try {
       await processAdminReport(selectedId, { status: confirmStatus });
+      // 게시글 신고를 처리 완료하면 서버가 게시글을 지운다. 홈은 스냅샷을 다시 쓰지 않으므로 여기서 뺀다.
+      if (confirmStatus === 'RESOLVED' && detail?.targetType === 'POST' && detail.postId !== null) {
+        useFeedViewStore.getState().removePost(detail.postId);
+      }
       setConfirmStatus(null);
       // 처리 후 상세, 목록, 대기 수를 다시 받는다.
       setReloadKey((current) => current + 1);
@@ -275,6 +293,7 @@ export function AdminReportsPage() {
                 <thead className="sticky top-0 bg-white text-xs text-zinc-400">
                   <tr className="border-b border-zinc-100">
                     <th className="w-24 py-3 pl-6 pr-4 font-medium">신고자</th>
+                    <th className="w-24 whitespace-nowrap px-4 py-3 font-medium">신고 유형</th>
                     <th className="w-24 px-4 py-3 font-medium">신고 대상</th>
                     <th className="w-28 px-4 py-3 font-medium">신고 사유</th>
                     <th className="px-4 py-3 font-medium">신고 내용</th>
@@ -294,6 +313,9 @@ export function AdminReportsPage() {
                         }
                       >
                         <td className="truncate py-3 pl-6 pr-4 text-zinc-900">{report.reporterName}</td>
+                        <td className="whitespace-nowrap px-4 py-3">
+                          <TargetTypeBadge targetType={report.targetType} />
+                        </td>
                         <td className="truncate px-4 py-3 text-zinc-700">
                           {displayText(report.targetUserName)}
                         </td>
