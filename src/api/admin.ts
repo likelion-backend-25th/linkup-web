@@ -119,11 +119,11 @@ function isAdminPaymentDetail(value: unknown): value is AdminPaymentDetailRespon
   return (
     typeof value.paymentMethod === 'string' &&
     typeof value.merchantUid === 'string' &&
-    typeof value.impUid === 'string' &&
+    (value.impUid === null || typeof value.impUid === 'string') &&
     typeof value.sellerId === 'string' &&
     typeof value.subStartDate === 'string' &&
-    typeof value.subEndDate === 'string' &&
-    typeof value.nextBillingAt === 'string' &&
+    (value.subEndDate === null || typeof value.subEndDate === 'string') &&
+    (value.nextBillingAt === null || typeof value.nextBillingAt === 'string') &&
     typeof value.subStatus === 'string'
   );
 }
@@ -218,13 +218,15 @@ export async function fetchAdminPayments(
   query: AdminPaymentSearchRequest = {},
   signal?: AbortSignal,
 ): Promise<AdminPaymentResponse[]> {
+  const keyword = query.keyword?.trim();
   const params = new URLSearchParams();
-  appendQuery(params, query);
-  const search = params.toString();
-  const data = await fetchApiJson(
-    `/api/v1/admin/payment${search === '' ? '' : `?${search}`}`,
-    { signal },
-  );
+  appendQuery(params, {
+    ...query,
+    keyword: keyword || undefined,
+    page: query.page !== undefined && query.page >= 1 ? query.page : 1,
+    size: query.size !== undefined && query.size >= 1 ? query.size : 20,
+  });
+  const data = await fetchApiJson(`/api/v1/admin/payment?${params.toString()}`, { signal });
   return parseList(data, isAdminPayment, '결제 목록 형식이 올바르지 않습니다.');
 }
 

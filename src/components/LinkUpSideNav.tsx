@@ -1,4 +1,4 @@
-import { Bell, House, PenLine, Search, User } from 'lucide-react';
+import { CreditCard, Flag, House, PenLine, Search, User, Users } from 'lucide-react';
 import { Link, NavLink } from 'react-router';
 import { LoginPromptDialog } from '@/components/LoginPromptDialog.tsx';
 import { UserAccountMenu } from '@/components/UserAccountMenu.tsx';
@@ -8,14 +8,28 @@ import { useLoginPromptStore } from '@/stores/useLoginPromptStore.ts';
 const navItems = [
   { to: '/', label: '홈', icon: House, auth: false },
   { to: '/search', label: '검색', icon: Search, auth: true },
-  { to: '/notifications', label: '알림', icon: Bell, auth: true, badge: true },
   { to: '/profile', label: '내프로필', icon: User, auth: true },
   { to: '/posts/new', label: '글쓰기', icon: PenLine, auth: true },
 ] as const;
 
+const adminItems = [
+  { to: '/admin/members', label: '회원', icon: Users },
+  { to: '/admin/reports', label: '신고 관리', icon: Flag },
+  { to: '/admin/payment', label: '결제', icon: CreditCard },
+] as const;
+
+function navClassName(isActive: boolean): string {
+  return [
+    'inline-flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium',
+    isActive ? 'bg-linkup-soft text-linkup' : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800',
+  ].join(' ');
+}
+
 export function LinkUpSideNav() {
   const accessToken = useAuthStore((state) => state.accessToken);
+  const profile = useAuthStore((state) => state.profile);
   const showLoginPrompt = useLoginPromptStore((state) => state.show);
+  const isAdmin = profile?.role.trim().toUpperCase() === 'ROLE_ADMIN';
 
   return (
     <>
@@ -39,26 +53,34 @@ export function LinkUpSideNav() {
                       showLoginPrompt();
                     }
                   }}
-                  className={({ isActive }) =>
-                    [
-                      'inline-flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium',
-                      isActive
-                        ? 'bg-linkup-soft text-linkup'
-                        : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800',
-                    ].join(' ')
-                  }
+                  className={({ isActive }) => navClassName(isActive)}
                 >
-                  <span className="relative">
-                    <Icon className="size-4" aria-hidden />
-                    {'badge' in item && item.badge ? (
-                      <span className="absolute -right-0.5 -top-0.5 size-1.5 rounded-full bg-linkup" />
-                    ) : null}
-                  </span>
+                  <Icon className="size-4" aria-hidden />
                   {item.label}
                 </NavLink>
               );
             })}
           </nav>
+          {isAdmin ? (
+            <div className="mt-3 border-t border-zinc-100 pt-3">
+              <p className="px-3 pb-1 text-xs font-semibold text-zinc-400">관리자</p>
+              <nav className="flex flex-col gap-1">
+                {adminItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      className={({ isActive }) => navClassName(isActive)}
+                    >
+                      <Icon className="size-4" aria-hidden />
+                      {item.label}
+                    </NavLink>
+                  );
+                })}
+              </nav>
+            </div>
+          ) : null}
         </div>
 
         <UserAccountMenu />

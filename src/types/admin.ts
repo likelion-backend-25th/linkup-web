@@ -112,11 +112,11 @@ export interface AdminPaymentDetailResponse {
   paymentStatus: string;
   paymentMethod: string;
   merchantUid: string;
-  impUid: string;
+  impUid: string | null;
   sellerNickname: string;
   sellerId: string;
   subStartDate: string;
-  subEndDate: string;
-  nextBillingAt: string;
+  subEndDate: string | null;
+  nextBillingAt: string | null;
   subStatus: string;
 }
