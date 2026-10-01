@@ -12,6 +12,7 @@ import { isAbortError, isHttpStatusError, toErrorMessage } from '@/api/http.ts';
 import { ActionMenu } from '@/components/ActionMenu.tsx';
 import { ConfirmDialog } from '@/components/ConfirmDialog.tsx';
 import { MemberAvatar } from '@/components/MemberAvatar.tsx';
+import { useLoginPromptStore } from '@/stores/useLoginPromptStore.ts';
 import type { ReplyResponse } from '@/types/reply.ts';
 import { formatRelativeTime } from '@/utils/formatDateTime.ts';
 
@@ -64,6 +65,7 @@ export function PostReplySection({
   const [editingText, setEditingText] = useState('');
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const promptIfLoggedOut = useLoginPromptStore((state) => state.promptIfLoggedOut);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -108,8 +110,7 @@ export function PostReplySection({
   }
 
   async function submitReply() {
-    if (!accessToken) {
-      setError(loginMessage());
+    if (promptIfLoggedOut() || !accessToken) {
       return;
     }
     const content = draft.trim();
@@ -159,8 +160,7 @@ export function PostReplySection({
   }
 
   async function toggleReplyLike(reply: ReplyResponse) {
-    if (!accessToken) {
-      setError(loginMessage());
+    if (promptIfLoggedOut() || !accessToken) {
       return;
     }
     const nextLiked = !reply.likedByMe;
@@ -297,6 +297,11 @@ export function PostReplySection({
         <input
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
+          onFocus={() => {
+            if (promptIfLoggedOut()) {
+              return;
+            }
+          }}
           maxLength={500}
           placeholder="댓글을 남겨주세요."
           className="min-w-0 flex-1 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm outline-none focus:border-linkup focus:bg-white"

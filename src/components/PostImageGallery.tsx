@@ -20,7 +20,7 @@ export function PostImageGallery({ images }: PostImageGalleryProps) {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="relative min-h-72 flex-1 overflow-hidden rounded-2xl bg-zinc-100">
+      <div className="relative min-h-80 flex-1 overflow-hidden rounded-2xl bg-zinc-100">
         <MediaImage
           src={current.imageUrl}
           alt={`사진 ${current.imageOrder}`}

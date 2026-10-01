@@ -8,6 +8,8 @@ interface ImageCropDialogProps {
   imageUrl: string;
   fileName: string;
   originalAspect: number;
+  initialRatio?: CropRatio;
+  lockRatio?: boolean;
   onClose: () => void;
   onSave: (file: File) => void;
 }
@@ -32,12 +34,14 @@ export function ImageCropDialog({
   imageUrl,
   fileName,
   originalAspect,
+  initialRatio = 'original',
+  lockRatio = false,
   onClose,
   onSave,
 }: ImageCropDialogProps) {
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [ratio, setRatio] = useState<CropRatio>('original');
+  const [ratio, setRatio] = useState<CropRatio>(initialRatio);
   const [croppedArea, setCroppedArea] = useState<CropArea | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -83,25 +87,27 @@ export function ImageCropDialog({
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
-          {ratioOptions.map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              onClick={() => {
-                setRatio(option.id);
-                setCrop({ x: 0, y: 0 });
-                setZoom(1);
-                setCroppedArea(null);
-              }}
-              className={
-                ratio === option.id
-                  ? 'rounded-full bg-linkup px-3 py-1.5 text-xs font-semibold text-white'
-                  : 'rounded-full border border-zinc-200 px-3 py-1.5 text-xs text-zinc-600'
-              }
-            >
-              {option.label}
-            </button>
-          ))}
+          {lockRatio
+            ? null
+            : ratioOptions.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => {
+                    setRatio(option.id);
+                    setCrop({ x: 0, y: 0 });
+                    setZoom(1);
+                    setCroppedArea(null);
+                  }}
+                  className={
+                    ratio === option.id
+                      ? 'rounded-full bg-linkup px-3 py-1.5 text-xs font-semibold text-white'
+                      : 'rounded-full border border-zinc-200 px-3 py-1.5 text-xs text-zinc-600'
+                  }
+                >
+                  {option.label}
+                </button>
+              ))}
           <label className="ml-auto flex min-w-44 items-center gap-2 text-xs text-zinc-500">
             확대
             <input

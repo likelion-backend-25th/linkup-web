@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { MemberAvatar } from '@/components/MemberAvatar.tsx';
+import { useLoginPromptStore } from '@/stores/useLoginPromptStore.ts';
 
 interface SuggestedUser {
   memberId: number;
@@ -15,8 +16,12 @@ interface SuggestedUsersProps {
 
 export function SuggestedUsers({ users }: SuggestedUsersProps) {
   const [following, setFollowing] = useState<number[]>([]);
+  const promptIfLoggedOut = useLoginPromptStore((state) => state.promptIfLoggedOut);
 
   function toggleFollow(memberId: number) {
+    if (promptIfLoggedOut()) {
+      return;
+    }
     setFollowing((current) =>
       current.includes(memberId)
         ? current.filter((id) => id !== memberId)
