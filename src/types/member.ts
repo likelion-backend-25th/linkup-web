@@ -13,6 +13,8 @@ export interface MemberResponseDto {
   profileImage: string | null;
   introduction: string | null;
   postCount: number | null;
+  followerCount: number | null;
+  followingCount: number | null;
   creator: boolean | null;
   subscriptionPrice: number | null;
 }

@@ -31,6 +31,8 @@ function parseMemberResponse(value: unknown): MemberResponseDto | null {
     profileImage: asString(value.profileImage) ?? asString(value.profileImageUrl),
     introduction: asString(value.introduction) ?? asString(value.intro),
     postCount: asNumber(value.postCount),
+    followerCount: asNumber(value.followerCount) ?? asNumber(value.follower_count),
+    followingCount: asNumber(value.followingCount) ?? asNumber(value.following_count),
     creator: typeof value.creator === 'boolean' ? value.creator : null,
     subscriptionPrice: asNumber(value.subscriptionPrice),
   };

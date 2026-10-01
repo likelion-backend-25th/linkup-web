@@ -79,6 +79,8 @@ export function ProfilePage() {
   const introduction =
     member?.introduction ?? (profileState?.introduction?.trim() || null);
   const postCount = member?.postCount ?? publicPosts.length;
+  const followerCount = member?.followerCount ?? follow?.followerCount ?? null;
+  const followingCount = member?.followingCount ?? follow?.followingCount ?? null;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -210,6 +212,12 @@ export function ProfilePage() {
         isFollowing: next,
         followerCount: follow.followerCount + (next ? 1 : -1),
       });
+      if (member !== null && member.followerCount !== null) {
+        setMember({
+          ...member,
+          followerCount: Math.max(0, member.followerCount + (next ? 1 : -1)),
+        });
+      }
     } catch (caught: unknown) {
       setNotice(toErrorMessage(caught));
     }
@@ -365,13 +373,13 @@ export function ProfilePage() {
             <div>
               <dt className="text-xs text-zinc-400">팔로워</dt>
               <dd className="text-lg font-semibold text-zinc-900">
-                {follow === null ? '-' : formatCount(follow.followerCount)}
+                {followerCount === null ? '-' : formatCount(followerCount)}
               </dd>
             </div>
             <div>
               <dt className="text-xs text-zinc-400">팔로잉</dt>
               <dd className="text-lg font-semibold text-zinc-900">
-                {follow === null ? '-' : formatCount(follow.followingCount)}
+                {followingCount === null ? '-' : formatCount(followingCount)}
               </dd>
             </div>
           </>
@@ -380,13 +388,13 @@ export function ProfilePage() {
             <Link to={`/members/${memberId}/follows`} className="hover:text-linkup">
               <dt className="text-xs text-zinc-400">팔로워</dt>
               <dd className="text-lg font-semibold text-zinc-900">
-                {follow === null ? '-' : formatCount(follow.followerCount)}
+                {followerCount === null ? '-' : formatCount(followerCount)}
               </dd>
             </Link>
             <Link to={`/members/${memberId}/follows`} className="hover:text-linkup">
               <dt className="text-xs text-zinc-400">팔로잉</dt>
               <dd className="text-lg font-semibold text-zinc-900">
-                {follow === null ? '-' : formatCount(follow.followingCount)}
+                {followingCount === null ? '-' : formatCount(followingCount)}
               </dd>
             </Link>
           </>
