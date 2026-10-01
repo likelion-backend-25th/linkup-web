@@ -62,15 +62,10 @@ export function SuggestedUsers({ users, error = null }: SuggestedUsersProps) {
                   className="min-w-0 flex-1 hover:text-linkup"
                 >
                   <p className="truncate text-sm font-medium text-zinc-800">{user.nickname}</p>
-<<<<<<< Updated upstream
-                  <p className="truncate text-xs text-zinc-400">@{user.uniqueId}</p>
-                </MemberProfileLink>
-=======
                   <p className="truncate text-xs text-zinc-400">
                     @{user.uniqueId} · 팔로워 {user.followerCount.toLocaleString('ko-KR')}
                   </p>
-                </Link>
->>>>>>> Stashed changes
+                </MemberProfileLink>
                 <button
                   type="button"
                   onClick={() => toggleFollow(user.memberId, isFollowing)}

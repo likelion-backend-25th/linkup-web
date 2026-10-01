@@ -111,8 +111,8 @@ export interface AdminPaymentDetailResponse {
   amount: number;
   paymentStatus: string;
   paymentMethod: string;
-  merchantUid: string;
-  impUid: string | null;
+  orderId: string;
+  paymentKey: string;
   sellerNickname: string;
   sellerId: string;
   subStartDate: string;
