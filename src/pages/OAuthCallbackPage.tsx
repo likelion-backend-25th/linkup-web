@@ -46,6 +46,7 @@ function profileFromToken(accessToken: string): MemberProfileResponse | null {
     nickname: claims.sub.split('@')[0] ?? '회원',
     uniqueId: null,
     profileImage: null,
+    introduction: null,
     role: claims.role ?? 'ROLE_USER',
     createdAt: '',
   };

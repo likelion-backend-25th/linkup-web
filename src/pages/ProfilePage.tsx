@@ -126,11 +126,12 @@ export function ProfilePage() {
     if (memberId === null) {
       return;
     }
+    const targetId = memberId;
     const controller = new AbortController();
 
     async function loadMember() {
       try {
-        const nextMember = await fetchMemberProfile(memberId, controller.signal);
+        const nextMember = await fetchMemberProfile(targetId, controller.signal);
         setMember(nextMember);
         const currentProfile = useAuthStore.getState().profile;
         if (isOwnView && nextMember.uniqueId && currentProfile && !currentProfile.uniqueId) {
@@ -152,11 +153,12 @@ export function ProfilePage() {
     if (memberId === null) {
       return;
     }
+    const targetId = memberId;
     const controller = new AbortController();
 
     async function loadFollow() {
       try {
-        const follow = await fetchFollow(memberId as number, controller.signal);
+        const follow = await fetchFollow(targetId, controller.signal);
         setFollowState(follow);
       } catch (caught: unknown) {
         if (!isAbortError(caught)) {
@@ -175,11 +177,13 @@ export function ProfilePage() {
       return;
     }
 
+    const targetId = memberId;
+    const token = accessToken;
     const controller = new AbortController();
 
     async function loadBlocked() {
       try {
-        const nextBlocked = await isMemberBlocked(memberId as number, accessToken, controller.signal);
+        const nextBlocked = await isMemberBlocked(targetId, token, controller.signal);
         if (!controller.signal.aborted) {
           setBlocked(nextBlocked);
         }
