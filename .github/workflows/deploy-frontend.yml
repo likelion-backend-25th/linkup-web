@@ -34,6 +34,7 @@ jobs:
         run: npm run build
         env:
           VITE_API_ORIGIN: ''
+          VITE_TOSS_CLIENT_KEY: ${{ secrets.VITE_TOSS_CLIENT_KEY }}
 
       - name: Configure AWS
         uses: aws-actions/configure-aws-credentials@v4
