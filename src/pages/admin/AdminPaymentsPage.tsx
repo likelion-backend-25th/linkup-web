@@ -1,4 +1,4 @@
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { fetchAdminPayment, fetchAdminPayments } from '@/api/admin.ts';
 import { isAbortError, toErrorMessage } from '@/api/http.ts';
@@ -23,7 +23,10 @@ const emptyQuery: PaymentQuery = {
 };
 
 const paymentStatusLabel: Record<string, string> = {
+  DONE: '결제 완료',
   PAID: '결제 완료',
+  ABORT: '결제 실패',
+  ABORTED: '결제 실패',
   FAILED: '결제 실패',
   CANCELED: '결제 취소',
 };
@@ -42,10 +45,10 @@ function subscriptionLabel(status: string): string {
 }
 
 function paymentStatusClass(status: string): string {
-  if (status === 'PAID') {
+  if (status === 'DONE' || status === 'PAID') {
     return 'bg-emerald-600 text-white';
   }
-  if (status === 'FAILED') {
+  if (status === 'ABORT' || status === 'ABORTED' || status === 'FAILED') {
     return 'bg-red-600 text-white';
   }
   if (status === 'CANCELED') {
@@ -108,6 +111,86 @@ function activePreset(startDate: string, endDate: string): 'all' | PeriodPresetI
   return matched?.id ?? '';
 }
 
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+
+function monthCells(year: number, month: number): Array<string | null> {
+  const leading = new Date(year, month, 1).getDay();
+  const count = new Date(year, month + 1, 0).getDate();
+  const cells: Array<string | null> = Array.from({ length: leading }, () => null);
+  for (let day = 1; day <= count; day += 1) {
+    cells.push(formatIsoDate(new Date(year, month, day)));
+  }
+  return cells;
+}
+
+function DateCalendar({
+  value,
+  onSelect,
+}: {
+  value: string;
+  onSelect: (date: string) => void;
+}) {
+  const initial = isIsoDate(value) ? value : formatIsoDate(new Date());
+  const [yearText, monthText] = initial.split('-');
+  const [cursor, setCursor] = useState(() => new Date(Number(yearText), Number(monthText) - 1, 1));
+  const year = cursor.getFullYear();
+  const month = cursor.getMonth();
+  const today = formatIsoDate(new Date());
+
+  return (
+    <div className="px-4 pb-2">
+      <div className="mb-2 flex items-center justify-between">
+        <button
+          type="button"
+          aria-label="이전 달"
+          onClick={() => setCursor(new Date(year, month - 1, 1))}
+          className="rounded-lg p-1 text-zinc-500 hover:bg-zinc-100"
+        >
+          <ChevronLeft className="size-4" />
+        </button>
+        <p className="text-sm font-medium text-zinc-800">
+          {year}년 {month + 1}월
+        </p>
+        <button
+          type="button"
+          aria-label="다음 달"
+          onClick={() => setCursor(new Date(year, month + 1, 1))}
+          className="rounded-lg p-1 text-zinc-500 hover:bg-zinc-100"
+        >
+          <ChevronRight className="size-4" />
+        </button>
+      </div>
+      <div className="grid grid-cols-7 gap-1 text-center text-xs text-zinc-400">
+        {WEEKDAYS.map((weekday) => (
+          <span key={weekday} className="py-1">
+            {weekday}
+          </span>
+        ))}
+        {monthCells(year, month).map((date, index) =>
+          date === null ? (
+            <span key={`empty-${index}`} />
+          ) : (
+            <button
+              key={date}
+              type="button"
+              onClick={() => onSelect(date)}
+              className={`rounded-lg py-1.5 text-sm ${
+                date === value
+                  ? 'bg-linkup font-medium text-white'
+                  : date === today
+                    ? 'text-linkup hover:bg-linkup-soft'
+                    : 'text-zinc-800 hover:bg-zinc-100'
+              }`}
+            >
+              {Number(date.slice(-2))}
+            </button>
+          ),
+        )}
+      </div>
+    </div>
+  );
+}
+
 function periodLabel(startDate: string, endDate: string): string {
   const preset = activePreset(startDate, endDate);
   if (preset === 'all') {
@@ -137,6 +220,7 @@ function PaymentPeriodPicker({
   const [rangeStart, setRangeStart] = useState(startDate);
   const [rangeEnd, setRangeEnd] = useState(endDate);
   const [rangeError, setRangeError] = useState<string | null>(null);
+  const [calendarTarget, setCalendarTarget] = useState<'start' | 'end' | null>(null);
   const selected = activePreset(startDate, endDate);
 
   useEffect(() => {
@@ -165,6 +249,7 @@ function PaymentPeriodPicker({
     setRangeStart(startDate);
     setRangeEnd(endDate);
     setRangeError(null);
+    setCalendarTarget(null);
     setOpen(true);
   }
 
@@ -223,22 +308,26 @@ function PaymentPeriodPicker({
           ))}
           <p className="px-4 pt-2 pb-2 text-xs text-zinc-400">기간 입력</p>
           <div className="flex items-center gap-2 px-4 pb-2">
-            <input
-              value={rangeStart}
-              onChange={(event) => setRangeStart(event.target.value)}
-              placeholder="시작일"
+            <button
+              type="button"
               aria-label="시작일"
-              inputMode="numeric"
-              className="min-w-0 flex-1 rounded-lg border border-zinc-200 px-2 py-1.5 text-sm text-zinc-800 outline-none focus:border-linkup"
-            />
-            <input
-              value={rangeEnd}
-              onChange={(event) => setRangeEnd(event.target.value)}
-              placeholder="종료일"
+              onClick={() => setCalendarTarget((current) => (current === 'start' ? null : 'start'))}
+              className={`min-w-0 flex-1 rounded-lg border px-2 py-1.5 text-left text-sm outline-none ${
+                calendarTarget === 'start' ? 'border-linkup' : 'border-zinc-200'
+              } ${rangeStart ? 'text-zinc-800' : 'text-zinc-400'}`}
+            >
+              {rangeStart || '시작일'}
+            </button>
+            <button
+              type="button"
               aria-label="종료일"
-              inputMode="numeric"
-              className="min-w-0 flex-1 rounded-lg border border-zinc-200 px-2 py-1.5 text-sm text-zinc-800 outline-none focus:border-linkup"
-            />
+              onClick={() => setCalendarTarget((current) => (current === 'end' ? null : 'end'))}
+              className={`min-w-0 flex-1 rounded-lg border px-2 py-1.5 text-left text-sm outline-none ${
+                calendarTarget === 'end' ? 'border-linkup' : 'border-zinc-200'
+              } ${rangeEnd ? 'text-zinc-800' : 'text-zinc-400'}`}
+            >
+              {rangeEnd || '종료일'}
+            </button>
             <button
               type="button"
               onClick={applyCustom}
@@ -247,6 +336,21 @@ function PaymentPeriodPicker({
               설정
             </button>
           </div>
+          {calendarTarget !== null && (
+            <DateCalendar
+              key={calendarTarget}
+              value={calendarTarget === 'start' ? rangeStart : rangeEnd}
+              onSelect={(date) => {
+                if (calendarTarget === 'start') {
+                  setRangeStart(date);
+                } else {
+                  setRangeEnd(date);
+                }
+                setRangeError(null);
+                setCalendarTarget(null);
+              }}
+            />
+          )}
           {rangeError && <p className="px-4 pb-1 text-xs text-red-500">{rangeError}</p>}
         </div>
       )}
@@ -279,29 +383,65 @@ export function AdminPaymentsPage() {
   const [detail, setDetail] = useState<AdminPaymentDetailResponse | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
+  const [hasNext, setHasNext] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
     setError(null);
+    setHasNext(false);
     setPayments([]);
 
-    fetchAdminPayments(
-      {
-        keyword: query.keyword || undefined,
-        paymentStatus: query.paymentStatus || undefined,
-        startDate: query.startDate || undefined,
-        endDate: query.endDate || undefined,
-        page,
-        size: PAGE_SIZE,
-      },
-      controller.signal,
-    )
-      .then((data) => setPayments(data))
-      .catch((caught: unknown) => {
-        if (!isAbortError(caught)) {
-          setError(toErrorMessage(caught));
+    const request = {
+      keyword: query.keyword || undefined,
+      paymentStatus: query.paymentStatus || undefined,
+      startDate: query.startDate || undefined,
+      endDate: query.endDate || undefined,
+      size: PAGE_SIZE,
+    };
+
+    fetchAdminPayments({ ...request, page }, controller.signal)
+      .then(async (data) => {
+        if (controller.signal.aborted) {
+          return;
         }
+        setPayments(data);
+        if (data.length < PAGE_SIZE) {
+          setHasNext(false);
+          return;
+        }
+
+        // 이번 페이지가 꽉 차도 다음이 없으면 버튼을 끈다. 형식 오류도 다음 페이지가 없는 것으로 본다.
+        try {
+          const nextPage = await fetchAdminPayments(
+            { ...request, page: page + 1 },
+            controller.signal,
+          );
+          if (controller.signal.aborted) {
+            return;
+          }
+          const repeated =
+            nextPage.length === data.length &&
+            nextPage.every((item, index) => item.paymentId === data[index]?.paymentId);
+          setHasNext(nextPage.length > 0 && !repeated);
+        } catch (caught: unknown) {
+          if (!isAbortError(caught)) {
+            setHasNext(false);
+          }
+        }
+      })
+      .catch((caught: unknown) => {
+        if (isAbortError(caught)) {
+          return;
+        }
+        setHasNext(false);
+        const message = toErrorMessage(caught);
+        // 결제 실패 건은 승인일이 없어 목록 형식 검사에 걸린다. 이때는 빈 조회로 본다.
+        if (query.paymentStatus === 'ABORTED' && message === '결제 목록 형식이 올바르지 않습니다.') {
+          setPayments([]);
+          return;
+        }
+        setError(message);
       })
       .finally(() => {
         if (!controller.signal.aborted) {
@@ -353,8 +493,6 @@ export function AdminPaymentsPage() {
     applyQuery(draft);
   }
 
-  const hasNext = payments.length === PAGE_SIZE;
-
   return (
     <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-white shadow-sm">
       <header className="relative z-10 shrink-0 border-b border-zinc-100 px-5 py-4">
@@ -375,8 +513,8 @@ export function AdminPaymentsPage() {
             className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm outline-none focus:border-linkup"
           >
             <option value="">결제 상태 전체</option>
-            <option value="PAID">결제 완료</option>
-            <option value="FAILED">결제 실패</option>
+            <option value="DONE">결제 완료</option>
+            <option value="ABORTED">결제 실패</option>
             <option value="CANCELED">결제 취소</option>
           </select>
           <PaymentPeriodPicker
