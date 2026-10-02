@@ -110,6 +110,7 @@ export function AdminReportsPage() {
   const [confirmStatus, setConfirmStatus] = useState<ReportProcessStatus | null>(null);
   const [processing, setProcessing] = useState(false);
   const [processError, setProcessError] = useState<string | null>(null);
+  const [hasNext, setHasNext] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -136,20 +137,45 @@ export function AdminReportsPage() {
     const controller = new AbortController();
     setListLoading(true);
     setListError(null);
+    setHasNext(false);
     setReports([]);
 
-    getAdminReports(
-      {
-        targetType: targetType || undefined,
-        status: status || undefined,
-        page,
-        size: PAGE_SIZE,
-      },
-      controller.signal,
-    )
-      .then((data) => setReports(data))
+    const request = {
+      targetType: targetType || undefined,
+      status: status || undefined,
+      size: PAGE_SIZE,
+    };
+
+    getAdminReports({ ...request, page }, controller.signal)
+      .then(async (data) => {
+        if (controller.signal.aborted) {
+          return;
+        }
+        setReports(data);
+        if (data.length < PAGE_SIZE) {
+          setHasNext(false);
+          return;
+        }
+
+        // 이번 페이지가 꽉 차도 다음이 없으면 버튼을 끈다. 형식 오류도 다음 페이지가 없는 것으로 본다.
+        try {
+          const nextPage = await getAdminReports({ ...request, page: page + 1 }, controller.signal);
+          if (controller.signal.aborted) {
+            return;
+          }
+          const repeated =
+            nextPage.length === data.length &&
+            nextPage.every((item, index) => item.id === data[index]?.id);
+          setHasNext(nextPage.length > 0 && !repeated);
+        } catch (caught: unknown) {
+          if (!isAbortError(caught)) {
+            setHasNext(false);
+          }
+        }
+      })
       .catch((caught: unknown) => {
         if (!isAbortError(caught)) {
+          setHasNext(false);
           setListError(toErrorMessage(caught));
         }
       })
@@ -226,8 +252,6 @@ export function AdminReportsPage() {
       setProcessing(false);
     }
   }
-
-  const hasNext = reports.length === PAGE_SIZE;
 
   return (
     <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-white shadow-sm">

@@ -47,16 +47,17 @@ function isAdminReport(value: unknown): value is AdminReportResponse {
 }
 
 function isAdminReportDetail(value: unknown): value is AdminReportDetailResponse {
-  if (!isAdminReport(value)) {
+  if (!isRecord(value)) {
     return false;
   }
 
-  return (
+  const hasDetail =
     (value.postId === null || typeof value.postId === 'number') &&
     (value.replyId === null || typeof value.replyId === 'number') &&
     (value.targetMemberId === null || typeof value.targetMemberId === 'number') &&
-    (value.reportContent === null || typeof value.reportContent === 'string')
-  );
+    (value.reportContent === null || typeof value.reportContent === 'string');
+
+  return hasDetail && isAdminReport(value);
 }
 
 function isAdminOperation(value: unknown): value is AdminOperationResponse {
@@ -84,15 +85,16 @@ function isAdminMember(value: unknown): value is AdminMemberResponse {
 }
 
 function isAdminMemberDetail(value: unknown): value is AdminMemberDetailResponse {
-  if (!isAdminMember(value)) {
+  if (!isRecord(value)) {
     return false;
   }
 
-  return (
+  const hasDetail =
     typeof value.email === 'string' &&
     (value.subscriptionPrice === null || typeof value.subscriptionPrice === 'number') &&
-    typeof value.subscriberCount === 'number'
-  );
+    typeof value.subscriberCount === 'number';
+
+  return hasDetail && isAdminMember(value);
 }
 
 function isAdminPayment(value: unknown): value is AdminPaymentResponse {
@@ -112,11 +114,11 @@ function isAdminPayment(value: unknown): value is AdminPaymentResponse {
 }
 
 function isAdminPaymentDetail(value: unknown): value is AdminPaymentDetailResponse {
-  if (!isAdminPayment(value)) {
+  if (!isRecord(value)) {
     return false;
   }
 
-  return (
+  const hasDetail =
     typeof value.paymentMethod === 'string' &&
     typeof value.orderId === 'string' &&
     typeof value.paymentKey === 'string' &&
@@ -124,8 +126,9 @@ function isAdminPaymentDetail(value: unknown): value is AdminPaymentDetailRespon
     typeof value.subStartDate === 'string' &&
     (value.subEndDate === null || typeof value.subEndDate === 'string') &&
     (value.nextBillingAt === null || typeof value.nextBillingAt === 'string') &&
-    typeof value.subStatus === 'string'
-  );
+    typeof value.subStatus === 'string';
+
+  return hasDetail && isAdminPayment(value);
 }
 
 function parseList<T>(
