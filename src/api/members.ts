@@ -1,5 +1,9 @@
 import { fetchApiJson } from '@/api/http.ts';
-import type { MemberResponseDto, MemberUpdateRequest } from '@/types/member.ts';
+import type {
+  MemberResponseDto,
+  MemberUpdateRequest,
+  RecommendedMemberResponseDto,
+} from '@/types/member.ts';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -31,9 +35,48 @@ function parseMemberResponse(value: unknown): MemberResponseDto | null {
     profileImage: asString(value.profileImage) ?? asString(value.profileImageUrl),
     introduction: asString(value.introduction) ?? asString(value.intro),
     postCount: asNumber(value.postCount),
-    creator: typeof value.creator === 'boolean' ? value.creator : null,
-    subscriptionPrice: asNumber(value.subscriptionPrice),
+    followerCount: asNumber(value.followerCount) ?? asNumber(value.follower_count),
+    followingCount: asNumber(value.followingCount) ?? asNumber(value.following_count),
+    role: asString(value.role),
+    subscribedStatus: asString(value.subscribedStatus)?.toUpperCase() ?? null,
   };
+}
+
+function parseRecommendedMember(value: unknown): RecommendedMemberResponseDto | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const id = asNumber(value.id);
+  const name = asString(value.name);
+  const uniqueId = asString(value.uniqueId);
+  if (id === null || name === null || uniqueId === null) {
+    return null;
+  }
+
+  return {
+    id,
+    name,
+    uniqueId,
+    profileImage: asString(value.profileImage),
+    introduction: asString(value.introduction),
+    followerCount: asNumber(value.followerCount) ?? 0,
+    following: value.following === true,
+  };
+}
+
+export async function fetchRecommendedMembers(
+  signal?: AbortSignal,
+): Promise<RecommendedMemberResponseDto[]> {
+  const data = await fetchApiJson('/api/v1/member/recommendations', { signal });
+  if (!Array.isArray(data)) {
+    throw new Error('추천 유저 응답 형식이 올바르지 않습니다.');
+  }
+
+  return data.flatMap((item) => {
+    const member = parseRecommendedMember(item);
+    return member === null ? [] : [member];
+  });
 }
 
 export async function fetchMemberProfile(

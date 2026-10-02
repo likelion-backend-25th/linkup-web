@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
+import { fetchRecommendedMembers } from '@/api/members.ts';
+import { isAbortError, toErrorMessage } from '@/api/http.ts';
 import { FollowingFeedList } from '@/components/FollowingFeedList.tsx';
 import { SuggestedUsers } from '@/components/SuggestedUsers.tsx';
 import { useAuthStore } from '@/stores/useAuthStore.ts';
 import { useFeedViewStore, type FeedTab } from '@/stores/useFeedViewStore.ts';
 import { useLoginPromptStore } from '@/stores/useLoginPromptStore.ts';
-import type { PostFeedItem } from '@/types/feed.ts';
+import type { RecommendedMemberResponseDto } from '@/types/member.ts';
 
 const tabs: { id: FeedTab; label: string }[] = [
   { id: 'popular', label: '인기' },
@@ -13,19 +15,41 @@ const tabs: { id: FeedTab; label: string }[] = [
   { id: 'subscribe', label: '구독' },
 ];
 
-const EMPTY_POSTS: PostFeedItem[] = [];
-
 export function FeedPage() {
   const accessToken = useAuthStore((state) => state.accessToken);
+  const [recommended, setRecommended] = useState<RecommendedMemberResponseDto[]>([]);
+  const [recommendError, setRecommendError] = useState<string | null>(null);
   const showLoginPrompt = useLoginPromptStore((state) => state.show);
   const tab = useFeedViewStore((state) => state.tab);
   const setTab = useFeedViewStore((state) => state.setTab);
   const query = useFeedViewStore((state) => state.query);
   const setQuery = useFeedViewStore((state) => state.setQuery);
-  const followingPosts = useFeedViewStore(
-    (state) => state.snapshots.following?.posts ?? EMPTY_POSTS,
-  );
   const feedScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!accessToken) {
+      setRecommended([]);
+      setRecommendError(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    // 추천 유저 실패는 피드 목록과 분리해서 카드 안에서만 보여 준다.
+    fetchRecommendedMembers(controller.signal)
+      .then((members) => {
+        setRecommended(members);
+        setRecommendError(null);
+      })
+      .catch((caught: unknown) => {
+        if (isAbortError(caught)) {
+          return;
+        }
+        setRecommended([]);
+        setRecommendError(toErrorMessage(caught));
+      });
+
+    return () => controller.abort();
+  }, [accessToken]);
 
   useEffect(() => {
     const scroller = feedScrollRef.current;
@@ -61,25 +85,6 @@ export function FeedPage() {
     }
     setTab(nextTab);
   }
-
-  const suggestedUsers = useMemo(() => {
-    const seen = new Set<number>();
-    return followingPosts
-      .filter((post: PostFeedItem) => {
-        if (seen.has(post.memberId)) {
-          return false;
-        }
-        seen.add(post.memberId);
-        return true;
-      })
-      .slice(0, 5)
-      .map((post) => ({
-        memberId: post.memberId,
-        nickname: post.memberName,
-        uniqueId: post.uniqueId,
-        profileImage: post.profileImageUrl,
-      }));
-  }, [followingPosts]);
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 xl:flex-row">
@@ -143,7 +148,17 @@ export function FeedPage() {
             className="w-full bg-transparent text-sm text-zinc-800 outline-none placeholder:text-zinc-400"
           />
         </label>
-        <SuggestedUsers users={suggestedUsers} />
+        <SuggestedUsers
+          users={recommended.map((member) => ({
+            memberId: member.id,
+            nickname: member.name,
+            uniqueId: member.uniqueId,
+            profileImage: member.profileImage,
+            followerCount: member.followerCount,
+            following: member.following,
+          }))}
+          error={recommendError}
+        />
       </aside>
     </div>
   );

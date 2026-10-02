@@ -22,6 +22,7 @@ export interface MemberProfileResponse {
   introduction: string | null;
   role: string;
   createdAt: string;
+  followerCount?: number;
   creatorStatus?: string | null;
   isCreator?: boolean | null;
 }

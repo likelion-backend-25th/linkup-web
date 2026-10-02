@@ -25,6 +25,16 @@ export function formatRelativeTime(value: string): string {
   return formatDateTime(value);
 }
 
+/** 2026.09.21 형식. 값이 없거나 해석할 수 없으면 '-' */
+export function formatDotDate(value: string | null): string {
+  const date = value ? new Date(value) : null;
+  if (!date || Number.isNaN(date.getTime())) {
+    return '-';
+  }
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())}`;
+}
+
 export function formatDateTime(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {

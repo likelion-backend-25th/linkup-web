@@ -18,6 +18,7 @@ interface FeedViewState {
   setQuery: (query: string) => void;
   setScrollTop: (scrollTop: number) => void;
   saveSnapshot: (feedType: FeedType, snapshot: FeedSnapshot) => void;
+  removePost: (postId: number) => void;
 }
 
 export const useFeedViewStore = create<FeedViewState>((set) => ({
@@ -32,4 +33,22 @@ export const useFeedViewStore = create<FeedViewState>((set) => ({
     set((state) => ({
       snapshots: { ...state.snapshots, [feedType]: snapshot },
     })),
+  removePost: (postId) =>
+    set((state) => {
+      let changed = false;
+      const snapshots: FeedViewState['snapshots'] = { ...state.snapshots };
+      (Object.keys(snapshots) as FeedType[]).forEach((feedType) => {
+        const snapshot = snapshots[feedType];
+        if (!snapshot) {
+          return;
+        }
+        const posts = snapshot.posts.filter((post) => post.postId !== postId);
+        if (posts.length === snapshot.posts.length) {
+          return;
+        }
+        changed = true;
+        snapshots[feedType] = { ...snapshot, posts };
+      });
+      return changed ? { snapshots } : state;
+    }),
 }));

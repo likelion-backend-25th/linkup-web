@@ -10,13 +10,16 @@ interface SubscriptionCardProps {
   subscription: SubscribeCreatorListResponse;
   displayStatus: SubscriptionDisplayStatus;
   onOpenDetail: (subscriptionId: number) => void;
+  onCancel: (subscription: SubscribeCreatorListResponse) => void;
 }
 
 export function SubscriptionCard({
   subscription,
   displayStatus,
   onOpenDetail,
+  onCancel,
 }: SubscriptionCardProps) {
+  const cancelable = displayStatus === 'active';
   const profilePath = `/members/${subscription.creatorId}`;
   const profileState = {
     name: subscription.creatorName,
@@ -66,12 +69,12 @@ export function SubscriptionCard({
           >
             상세 내역
           </button>
-          {/* 구독 해지 API 가 아직 없어 비활성화 */}
           <button
             type="button"
-            disabled
-            title="준비 중인 기능"
-            className="rounded-xl border border-zinc-200 py-2 text-xs font-medium text-zinc-600 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={!cancelable}
+            title={cancelable ? undefined : '이미 해지된 구독입니다.'}
+            onClick={() => onCancel(subscription)}
+            className="rounded-xl border border-zinc-200 py-2 text-xs font-medium text-zinc-600 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
           >
             구독 해지
           </button>

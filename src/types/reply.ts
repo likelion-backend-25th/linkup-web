@@ -8,6 +8,8 @@ export interface ReplyResponse {
   content: string;
   likeCount: number;
   likedByMe: boolean;
+  /** 관리자 숨김. true면 목록에 그리지 않는다. */
+  hidden?: boolean;
   createdAt: string;
   updatedAt: string;
 }

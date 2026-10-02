@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Ellipsis } from 'lucide-react';
+import { EllipsisVertical } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { ConfirmDialog } from '@/components/ConfirmDialog.tsx';
 import { MemberAvatar } from '@/components/MemberAvatar.tsx';
@@ -16,6 +16,7 @@ export function UserAccountMenu() {
 
   const displayName = profile?.nickname ?? '회원';
   const handle = profile?.uniqueId || '';
+  const isAdmin = profile?.role.trim().toUpperCase() === 'ROLE_ADMIN';
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -58,6 +59,16 @@ export function UserAccountMenu() {
           role="menu"
           className="absolute bottom-full left-0 mb-2 w-full rounded-xl border border-zinc-100 bg-white py-1 shadow-md"
         >
+          {isAdmin ? (
+            <Link
+              role="menuitem"
+              to="/admin"
+              onClick={() => setOpen(false)}
+              className="block px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
+            >
+              관리자 페이지
+            </Link>
+          ) : null}
           <Link
             role="menuitem"
             to="/subscriptions"
@@ -98,7 +109,7 @@ export function UserAccountMenu() {
           onClick={() => setOpen((current) => !current)}
           className="flex size-8 shrink-0 items-center justify-center rounded-full text-zinc-400 hover:bg-zinc-50 hover:text-zinc-700"
         >
-          <Ellipsis className="size-5" aria-hidden />
+          <EllipsisVertical className="size-5" aria-hidden />
           <span className="sr-only">계정 메뉴</span>
         </button>
       </div>

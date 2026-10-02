@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { SubscriptionCancelDialog } from '@/components/SubscriptionCancelDialog.tsx';
 import { SubscriptionCard } from '@/components/SubscriptionCard.tsx';
 import { SubscriptionDetailDialog } from '@/components/SubscriptionDetailDialog.tsx';
 import type { SubscriptionDisplayStatus } from '@/components/SubscriptionStatusBadge.tsx';
@@ -11,7 +12,7 @@ function toDisplayStatus(item: SubscribeCreatorListResponse): SubscriptionDispla
   if (item.status === 'ACTIVE') {
     return 'active';
   }
-  if (item.status === 'CANCELLED') {
+  if (item.status === 'CANCELLED' || item.status === 'CANCELED') {
     return 'ending';
   }
   return 'ended';
@@ -19,12 +20,14 @@ function toDisplayStatus(item: SubscribeCreatorListResponse): SubscriptionDispla
 
 export function SubscriptionsPage() {
   const accessToken = useRequiredAccessToken();
-  const { subscriptions, totalCount, hasNext, loading, error, loadMore } =
+  const { subscriptions, totalCount, hasNext, loading, error, loadMore, updateStatus } =
     useSubscriptions(accessToken);
   const scrollRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [detailId, setDetailId] = useState<number | null>(null);
   const closeDetail = useCallback(() => setDetailId(null), []);
+  const [cancelTarget, setCancelTarget] = useState<SubscribeCreatorListResponse | null>(null);
+  const closeCancel = useCallback(() => setCancelTarget(null), []);
 
   // 하단 sentinel 이 보이면 다음 페이지를 요청한다. 에러 시 자동 재시도하지 않는다.
   useEffect(() => {
@@ -73,6 +76,7 @@ export function SubscriptionsPage() {
                   subscription={item}
                   displayStatus={status}
                   onOpenDetail={setDetailId}
+                  onCancel={setCancelTarget}
                 />
               </li>
             ))}
@@ -103,6 +107,15 @@ export function SubscriptionsPage() {
           subscriptionId={detailId}
           accessToken={accessToken}
           onClose={closeDetail}
+        />
+      )}
+      {cancelTarget !== null && (
+        <SubscriptionCancelDialog
+          key={cancelTarget.subscriptionId}
+          subscriptionId={cancelTarget.subscriptionId}
+          accessToken={accessToken}
+          onClose={closeCancel}
+          onStatusChange={updateStatus}
         />
       )}
     </section>

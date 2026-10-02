@@ -1,25 +1,36 @@
 import { ArrowLeft } from 'lucide-react';
-import { Link, useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { FollowMemberList } from '@/components/FollowMemberList.tsx';
 import { useAuthStore } from '@/stores/useAuthStore.ts';
 
 export function FollowListPage() {
   const params = useParams();
+  const navigate = useNavigate();
   const profileId = useAuthStore((state) => state.profile?.id ?? null);
   const routeMemberId = Number(params.memberId);
   const isMemberProfile = Number.isInteger(routeMemberId) && routeMemberId > 0;
   const memberId = isMemberProfile ? routeMemberId : profileId;
   const backTo = isMemberProfile ? `/members/${routeMemberId}` : '/profile';
 
+  function goBack() {
+    const idx = (window.history.state as { idx?: number } | null)?.idx;
+    if (typeof idx === 'number' && idx > 0) {
+      void navigate(-1);
+      return;
+    }
+    void navigate(backTo, { replace: true });
+  }
+
   const backLink = (
     <div className="shrink-0 border-b border-zinc-100 px-5 py-3">
-      <Link
-        to={backTo}
+      <button
+        type="button"
+        onClick={goBack}
         className="inline-flex items-center gap-1 text-sm font-medium text-zinc-500 hover:text-linkup"
       >
         <ArrowLeft className="size-4" aria-hidden />
         뒤로
-      </Link>
+      </button>
     </div>
   );
 

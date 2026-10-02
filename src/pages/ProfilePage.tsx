@@ -7,16 +7,21 @@ import { fetchFollow, setFollow } from '@/api/follow.ts';
 import { isAbortError, isHttpStatusError, toErrorMessage } from '@/api/http.ts';
 import { fetchMemberProfile } from '@/api/members.ts';
 import { ActionMenu } from '@/components/ActionMenu.tsx';
+import { AlertDialog } from '@/components/AlertDialog.tsx';
 import { ConfirmDialog } from '@/components/ConfirmDialog.tsx';
 import { MediaImage } from '@/components/MediaImage.tsx';
 import { MemberAvatar } from '@/components/MemberAvatar.tsx';
+import { PaymentReceipt } from '@/components/PaymentReceipt.tsx';
 import { SubscriberOnlyGate } from '@/components/SubscriberOnlyGate.tsx';
+import { useBillingResult } from '@/hooks/useBillingResult.ts';
 import { useAuthStore } from '@/stores/useAuthStore.ts';
 import { useBlockMemoryStore } from '@/stores/useBlockMemoryStore.ts';
 import { useLoginPromptStore } from '@/stores/useLoginPromptStore.ts';
 import type { PostFeedItem } from '@/types/feed.ts';
 import type { FollowResponse } from '@/types/follow.ts';
 import type { MemberResponseDto } from '@/types/member.ts';
+import { isCreatorAccount } from '@/utils/authRole.ts';
+import { isTossUserCancel, requestCardBillingAuth } from '@/utils/tossBilling.ts';
 
 type ProfileTab = 'public' | 'subscriber';
 
@@ -59,10 +64,21 @@ export function ProfilePage() {
   const [confirmBlock, setConfirmBlock] = useState(false);
   const [confirmUnblock, setConfirmUnblock] = useState(false);
   const [blockPending, setBlockPending] = useState(false);
+  const [subscribePending, setSubscribePending] = useState(false);
+  const [postsReloadKey, setPostsReloadKey] = useState(0);
   const promptIfLoggedOut = useLoginPromptStore((state) => state.promptIfLoggedOut);
 
   const memberId = isMemberProfile ? routeMemberId : (profile?.id ?? null);
   const isOwnView = !isMemberProfile || profile?.id === routeMemberId;
+  const billing = useBillingResult(memberId);
+  const isCreator = isCreatorAccount({ role: member?.role });
+  // REMOVED 는 구독이 완전히 끝난 상태라 미구독(null)과 같이 다시 구독할 수 있게 한다.
+  const memberSubscribedStatus =
+    member?.subscribedStatus === 'REMOVED' ? null : (member?.subscribedStatus ?? null);
+  const subscriptionStatus =
+    billing.dialog?.succeeded === true ? 'ACTIVE' : memberSubscribedStatus;
+  // 회원 정보(구독 상태 포함) 로딩 전에 눌러 중복 구독되지 않도록 막는다. (비로그인은 로그인 유도를 위해 허용)
+  const subscriptionChecking = Boolean(accessToken) && !isOwnView && member === null;
   const owner =
     publicPosts[0] && (memberId === null || publicPosts[0].memberId === memberId)
       ? publicPosts[0]
@@ -79,6 +95,8 @@ export function ProfilePage() {
   const introduction =
     member?.introduction ?? (profileState?.introduction?.trim() || null);
   const postCount = member?.postCount ?? publicPosts.length;
+  const followerCount = member?.followerCount ?? follow?.followerCount ?? null;
+  const followingCount = member?.followingCount ?? follow?.followingCount ?? null;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -119,7 +137,7 @@ export function ProfilePage() {
 
     void load();
     return () => controller.abort();
-  }, [isMemberProfile, isOwnView, routeMemberId, tab]);
+  }, [isMemberProfile, isOwnView, routeMemberId, tab, postsReloadKey]);
 
   // 헤더는 게시글이 아니라 GET /api/v1/member/{memberId} 를 기준으로 그린다.
   useEffect(() => {
@@ -140,6 +158,8 @@ export function ProfilePage() {
       } catch (caught: unknown) {
         if (!isAbortError(caught)) {
           setMember(null);
+          // 실패를 숨기면 구독 버튼이 이유 없이 비활성으로만 보여서 원인을 노출한다.
+          setNotice(`프로필 정보를 불러오지 못했습니다. ${toErrorMessage(caught)}`);
         }
       }
     }
@@ -210,6 +230,12 @@ export function ProfilePage() {
         isFollowing: next,
         followerCount: follow.followerCount + (next ? 1 : -1),
       });
+      if (member !== null && member.followerCount !== null) {
+        setMember({
+          ...member,
+          followerCount: Math.max(0, member.followerCount + (next ? 1 : -1)),
+        });
+      }
     } catch (caught: unknown) {
       setNotice(toErrorMessage(caught));
     }
@@ -257,6 +283,32 @@ export function ProfilePage() {
     } finally {
       setBlockPending(false);
     }
+  }
+
+  async function startSubscribe() {
+    if (promptIfLoggedOut() || !profile || memberId === null || !isCreator) {
+      return;
+    }
+    setSubscribePending(true);
+    setNotice(null);
+    try {
+      await requestCardBillingAuth(memberId, { email: profile.email, nickname: profile.nickname });
+    } catch (caught: unknown) {
+      if (!isTossUserCancel(caught)) {
+        billing.reportSdkError(toErrorMessage(caught));
+      }
+    } finally {
+      setSubscribePending(false);
+    }
+  }
+
+  function closeBillingDialog() {
+    // 구독 성공 후에는 구독자 전용 탭 잠금이 풀려야 하므로 게시글을 다시 불러온다.
+    if (billing.dialog?.succeeded) {
+      setPostsReloadKey((key) => key + 1);
+      setMember((current) => (current ? { ...current, subscribedStatus: 'ACTIVE' } : current));
+    }
+    billing.close();
   }
 
   function goBack() {
@@ -323,14 +375,25 @@ export function ProfilePage() {
                 >
                   {follow?.isFollowing ? '팔로잉' : '팔로우'}
                 </button>
-                <button
-                  type="button"
-                  disabled
-                  title="구독 등록 API 준비 중"
-                  className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-semibold text-zinc-400"
-                >
-                  구독
-                </button>
+                {subscriptionStatus !== null ? (
+                  <button
+                    type="button"
+                    disabled
+                    className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm font-semibold text-zinc-500"
+                  >
+                    {subscriptionStatus === 'ACTIVE' ? '구독 중' : '구독 종료 예정'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={!isCreator || subscribePending || subscriptionChecking}
+                    title={isCreator ? undefined : '크리에이터만 구독할 수 있습니다.'}
+                    onClick={() => void startSubscribe()}
+                    className="rounded-xl border border-linkup px-4 py-2 text-sm font-semibold text-linkup hover:bg-linkup-soft disabled:border-zinc-200 disabled:text-zinc-400 disabled:hover:bg-transparent"
+                  >
+                    구독
+                  </button>
+                )}
               </>
             )}
             <ActionMenu
@@ -365,13 +428,13 @@ export function ProfilePage() {
             <div>
               <dt className="text-xs text-zinc-400">팔로워</dt>
               <dd className="text-lg font-semibold text-zinc-900">
-                {follow === null ? '-' : formatCount(follow.followerCount)}
+                {followerCount === null ? '-' : formatCount(followerCount)}
               </dd>
             </div>
             <div>
               <dt className="text-xs text-zinc-400">팔로잉</dt>
               <dd className="text-lg font-semibold text-zinc-900">
-                {follow === null ? '-' : formatCount(follow.followingCount)}
+                {followingCount === null ? '-' : formatCount(followingCount)}
               </dd>
             </div>
           </>
@@ -380,13 +443,13 @@ export function ProfilePage() {
             <Link to={`/members/${memberId}/follows`} className="hover:text-linkup">
               <dt className="text-xs text-zinc-400">팔로워</dt>
               <dd className="text-lg font-semibold text-zinc-900">
-                {follow === null ? '-' : formatCount(follow.followerCount)}
+                {followerCount === null ? '-' : formatCount(followerCount)}
               </dd>
             </Link>
             <Link to={`/members/${memberId}/follows`} className="hover:text-linkup">
               <dt className="text-xs text-zinc-400">팔로잉</dt>
               <dd className="text-lg font-semibold text-zinc-900">
-                {follow === null ? '-' : formatCount(follow.followingCount)}
+                {followingCount === null ? '-' : formatCount(followingCount)}
               </dd>
             </Link>
           </>
@@ -401,9 +464,12 @@ export function ProfilePage() {
           >
             프로필 수정
           </Link>
-          <span className="rounded-xl border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-400">
+          <Link
+            to="/creators"
+            className="rounded-xl border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+          >
             크리에이터 페이지
-          </span>
+          </Link>
           <Link
             to="/subscriptions"
             className="rounded-xl border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
@@ -494,6 +560,17 @@ export function ProfilePage() {
           onClose={() => setConfirmUnblock(false)}
           onConfirm={() => void unblockMember()}
         />
+      )}
+      {billing.dialog && (
+        <AlertDialog
+          title={billing.dialog.title}
+          message={billing.dialog.message}
+          detail={billing.dialog.detail}
+          pending={billing.dialog.pending}
+          onClose={closeBillingDialog}
+        >
+          {billing.dialog.payment && <PaymentReceipt payment={billing.dialog.payment} />}
+        </AlertDialog>
       )}
     </section>
   );

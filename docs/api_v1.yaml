@@ -346,14 +346,14 @@
         }
       }
     },
-    "/api/v1/subscriptions/{id}": {
+    "/api/v1/subscriptions/cancel/{id}": {
       "get": {
         "tags": [
           "subscription-controller"
         ],
-        "summary": "구독 내역 상세 조회",
-        "description": "구독 id 값을 사용하여 구독 내역을 상세 조회 한다",
-        "operationId": "getSubscriptionDetail",
+        "summary": "구독 시작일 검증",
+        "description": "구독 id 값을 사용하여 구독 시작일을 검증한다",
+        "operationId": "checkStartDate",
         "parameters": [
           {
             "name": "id",
@@ -369,11 +369,11 @@
         ],
         "responses": {
           "200": {
-            "description": "구독 상세 내역 조회 성공",
+            "description": "구독 시작일 검증 성공",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SubscriptionDetailResponse"
+                  "$ref": "#/components/schemas/CheckBillingDateResponse"
                 }
               }
             }
@@ -401,8 +401,50 @@
           }
         ],
         "responses": {
-          "204": {
-            "description": "구독 해지 성공"
+          "202": {
+            "description": "구독 해지 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CancelSubscriptionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/subscriptions/cancel/{id}/refund": {
+      "post": {
+        "tags": [
+          "subscription-controller"
+        ],
+        "summary": "구독 환불",
+        "description": "구독 id 값을 사용하여 구독을 환불한다",
+        "operationId": "refundSubscription",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "구독 내역 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "구독 환불 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefundSubscriptionResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -821,6 +863,114 @@
         }
       }
     },
+    "/api/v1/member/{memberId}/block": {
+      "post": {
+        "tags": [
+          "member-controller"
+        ],
+        "operationId": "blockMember",
+        "parameters": [
+          {
+            "name": "memberId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "member-controller"
+        ],
+        "operationId": "unblockMember",
+        "parameters": [
+          {
+            "name": "memberId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/creators": {
+      "get": {
+        "tags": [
+          "creator-controller"
+        ],
+        "summary": "크리에이터인 사용자의 구독자 리스트 조회",
+        "description": "크리에이터인 사용자의 Auth 정보에서 ID값을 가져와 구독자 리스트를 조회하여 반환한다",
+        "operationId": "getSubscribeCreatorList_1",
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "다음 페이징 커서 값",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "페이지 사이즈",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10,
+              "maximum": 20,
+              "minimum": 3
+            },
+            "example": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "리스트 조회 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagingSubscriberListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "creator-controller"
+        ],
+        "summary": "사용자 크리에이터 승인",
+        "description": "사용자의 크리에이터 신청을 승인한다",
+        "operationId": "applyCreator",
+        "responses": {
+          "204": {
+            "description": "크리에이터 승인 완료"
+          }
+        }
+      }
+    },
     "/api/v1/auth/refresh": {
       "post": {
         "tags": [
@@ -914,10 +1064,108 @@
         }
       }
     },
+    "/api/v1/subscriptions/{id}": {
+      "get": {
+        "tags": [
+          "subscription-controller"
+        ],
+        "summary": "구독 내역 상세 조회",
+        "description": "구독 id 값을 사용하여 구독 내역을 상세 조회 한다",
+        "operationId": "getSubscriptionDetail",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "구독 내역 ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "구독 상세 내역 조회 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionDetailResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/search/posts": {
+      "get": {
+        "tags": [
+          "post-search-controller"
+        ],
+        "operationId": "searchPosts",
+        "parameters": [
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "ALL",
+              "enum": [
+                "ALL",
+                "FOLLOWING",
+                "SUBSCRIBING"
+              ]
+            }
+          },
+          {
+            "name": "cursorId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CursorResponsePostCardResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/search/members": {
       "get": {
         "tags": [
-          "search-controller"
+          "member-search-controller"
         ],
         "operationId": "searchMembers",
         "parameters": [
@@ -960,15 +1208,6 @@
               "type": "integer",
               "format": "int32",
               "default": 20
-            }
-          },
-          {
-            "name": "X-Member-Id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
             }
           }
         ],
@@ -1097,6 +1336,106 @@
         }
       }
     },
+    "/api/v1/members/{memberId}/followings": {
+      "get": {
+        "tags": [
+          "follow-controller"
+        ],
+        "operationId": "getFollowings",
+        "parameters": [
+          {
+            "name": "memberId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowMemberPageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/members/{memberId}/followers": {
+      "get": {
+        "tags": [
+          "follow-controller"
+        ],
+        "operationId": "getFollowers",
+        "parameters": [
+          {
+            "name": "memberId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowMemberPageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/members/me/feeds": {
       "get": {
         "tags": [
@@ -1180,6 +1519,83 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/FeedResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/member/{memberId}": {
+      "get": {
+        "tags": [
+          "member-controller"
+        ],
+        "operationId": "getMemberProfile",
+        "parameters": [
+          {
+            "name": "memberId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/member/recommendations": {
+      "get": {
+        "tags": [
+          "member-controller"
+        ],
+        "operationId": "getRecommendedMembers",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RecommendedMemberResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/member/blocks": {
+      "get": {
+        "tags": [
+          "member-controller"
+        ],
+        "operationId": "getBlockedMembers",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BlockedMemberResponseDto"
+                  }
                 }
               }
             }
@@ -1584,6 +2000,9 @@
           },
           "introduction": {
             "type": "string"
+          },
+          "uniqueId": {
+            "type": "string"
           }
         }
       },
@@ -1595,12 +2014,11 @@
             "type": "integer",
             "format": "int64"
           },
-          "customerUid": {
+          "customerKey": {
             "type": "string"
           },
-          "price": {
-            "type": "integer",
-            "format": "int32"
+          "authKey": {
+            "type": "string"
           }
         }
       },
@@ -1610,6 +2028,40 @@
           "subscriptionId": {
             "type": "integer",
             "format": "int64"
+          },
+          "orderName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "totalAmount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "approvedAt": {
+            "type": "string"
+          }
+        }
+      },
+      "CancelSubscriptionResponse": {
+        "type": "object",
+        "properties": {
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RefundSubscriptionResponse": {
+        "type": "object",
+        "properties": {
+          "totalAmount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "canceledAt": {
+            "type": "string"
           }
         }
       },
@@ -1796,6 +2248,78 @@
           }
         }
       },
+      "CheckBillingDateResponse": {
+        "type": "object",
+        "properties": {
+          "billingDate": {
+            "type": "string"
+          }
+        }
+      },
+      "CursorResponsePostCardResponse": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostCardResponse"
+            }
+          },
+          "nextCursor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "hasNext": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PostCardResponse": {
+        "type": "object",
+        "properties": {
+          "postId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberName": {
+            "type": "string"
+          },
+          "uniqueId": {
+            "type": "string"
+          },
+          "profileImageUrl": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "mainImageUrl": {
+            "type": "string"
+          },
+          "likeCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "commentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "likedByMe": {
+            "type": "boolean"
+          },
+          "subscriberOnly": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "CursorResponseMemberSearchResponse": {
         "type": "object",
         "properties": {
@@ -1948,6 +2472,9 @@
             "type": "integer",
             "format": "int32"
           },
+          "likedByMe": {
+            "type": "boolean"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -2000,10 +2527,28 @@
           }
         }
       },
-      "PostCardResponse": {
+      "FollowMemberPageResponse": {
         "type": "object",
         "properties": {
-          "postId": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FollowMemberResponse"
+            }
+          },
+          "nextCursor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "hasNext": {
+            "type": "boolean"
+          }
+        }
+      },
+      "FollowMemberResponse": {
+        "type": "object",
+        "properties": {
+          "followId": {
             "type": "integer",
             "format": "int64"
           },
@@ -2011,35 +2556,81 @@
             "type": "integer",
             "format": "int64"
           },
-          "memberName": {
+          "name": {
             "type": "string"
           },
           "uniqueId": {
             "type": "string"
           },
-          "profileImageUrl": {
+          "profileImage": {
+            "type": "string"
+          }
+        }
+      },
+      "MemberResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "uniqueId": {
             "type": "string"
           },
-          "content": {
+          "name": {
             "type": "string"
           },
-          "mainImageUrl": {
+          "profileImage": {
             "type": "string"
           },
-          "likeCount": {
+          "introduction": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "postCount": {
             "type": "integer",
             "format": "int32"
           },
-          "commentCount": {
+          "followerCount": {
             "type": "integer",
             "format": "int32"
           },
-          "subscriberOnly": {
+          "followingCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "subscribedStatus": {
+            "type": "string"
+          }
+        }
+      },
+      "RecommendedMemberResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "uniqueId": {
+            "type": "string"
+          },
+          "profileImage": {
+            "type": "string"
+          },
+          "introduction": {
+            "type": "string"
+          },
+          "followerCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "following": {
             "type": "boolean"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
           }
         }
       },
@@ -2076,6 +2667,84 @@
           "followingCount": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "BlockedMemberResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "uniqueId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "profileImage": {
+            "type": "string"
+          }
+        }
+      },
+      "PagingSubscriberListResponse": {
+        "type": "object",
+        "properties": {
+          "subscriberList": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubscriberResponse"
+            }
+          },
+          "subscriberCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nextCursor": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "hasNext": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SubscriberResponse": {
+        "type": "object",
+        "properties": {
+          "subscriptionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "creatorId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberName": {
+            "type": "string"
+          },
+          "memberUniqueId": {
+            "type": "string"
+          },
+          "profileImage": {
+            "type": "string"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "nextBillingAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -2275,10 +2944,10 @@
           "paymentMethod": {
             "type": "string"
           },
-          "merchantUid": {
+          "orderId": {
             "type": "string"
           },
-          "impUid": {
+          "paymentKey": {
             "type": "string"
           },
           "sellerNickname": {

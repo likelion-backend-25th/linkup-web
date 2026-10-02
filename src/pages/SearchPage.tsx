@@ -2,12 +2,14 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Search } from 'lucide-react';
 import { Link } from 'react-router';
 import { isAbortError, toErrorMessage } from '@/api/http.ts';
-import { searchMembers } from '@/api/search.ts';
+import { searchMembers, searchPosts } from '@/api/search.ts';
 import { MemberAvatar } from '@/components/MemberAvatar.tsx';
+import { PostCard } from '@/components/PostCard.tsx';
 import { useAuthStore } from '@/stores/useAuthStore.ts';
-import type { MemberSearchFilter, MemberSearchItem } from '@/types/search.ts';
+import type { PostFeedItem } from '@/types/feed.ts';
+import type { MemberSearchItem, SearchFilter, SearchTab } from '@/types/search.ts';
 
-const filters: { value: MemberSearchFilter; label: string }[] = [
+const filters: { value: SearchFilter; label: string }[] = [
   { value: 'ALL', label: '모든 사용자' },
   { value: 'FOLLOWING', label: '팔로우 사용자' },
   { value: 'SUBSCRIBING', label: '구독 사용자' },
@@ -16,10 +18,12 @@ const filters: { value: MemberSearchFilter; label: string }[] = [
 export function SearchPage() {
   const memberId = useAuthStore((state) => state.profile?.id ?? null);
   const controllerRef = useRef<AbortController | null>(null);
+  const [tab, setTab] = useState<SearchTab>('posts');
   const [query, setQuery] = useState('');
   const [keyword, setKeyword] = useState('');
-  const [filter, setFilter] = useState<MemberSearchFilter>('ALL');
+  const [filter, setFilter] = useState<SearchFilter>('ALL');
   const [members, setMembers] = useState<MemberSearchItem[]>([]);
+  const [posts, setPosts] = useState<PostFeedItem[]>([]);
   const [nextCursor, setNextCursor] = useState<number | null>(null);
   const [hasNext, setHasNext] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -30,14 +34,16 @@ export function SearchPage() {
   }, []);
 
   async function runSearch(
+    nextTab: SearchTab,
     nextKeyword: string,
-    nextFilter: MemberSearchFilter,
+    nextFilter: SearchFilter,
     cursor: number | null,
     append: boolean,
   ) {
     const trimmed = nextKeyword.trim();
     if (trimmed === '') {
       setMembers([]);
+      setPosts([]);
       setKeyword('');
       setHasNext(false);
       setNextCursor(null);
@@ -51,17 +57,36 @@ export function SearchPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await searchMembers(
-        trimmed,
-        nextFilter,
-        memberId,
-        cursor,
-        controller.signal,
-      );
-      setMembers((current) => (append ? [...current, ...response.content] : response.content));
+      if (nextTab === 'posts') {
+        const response = await searchPosts(
+          trimmed,
+          nextFilter,
+          memberId,
+          cursor,
+          controller.signal,
+        );
+        setPosts((current) => (append ? [...current, ...response.content] : response.content));
+        if (!append) {
+          setMembers([]);
+        }
+        setNextCursor(response.nextCursor);
+        setHasNext(response.hasNext);
+      } else {
+        const response = await searchMembers(
+          trimmed,
+          nextFilter,
+          memberId,
+          cursor,
+          controller.signal,
+        );
+        setMembers((current) => (append ? [...current, ...response.content] : response.content));
+        if (!append) {
+          setPosts([]);
+        }
+        setNextCursor(response.nextCursor);
+        setHasNext(response.hasNext);
+      }
       setKeyword(trimmed);
-      setNextCursor(response.nextCursor);
-      setHasNext(response.hasNext);
     } catch (caught: unknown) {
       if (!isAbortError(caught)) {
         setError(toErrorMessage(caught));
@@ -75,15 +100,28 @@ export function SearchPage() {
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    void runSearch(query, filter, null, false);
+    void runSearch(tab, query, filter, null, false);
   }
 
-  function selectFilter(nextFilter: MemberSearchFilter) {
-    setFilter(nextFilter);
+  function selectTab(nextTab: SearchTab) {
+    if (nextTab === tab) {
+      return;
+    }
+    setTab(nextTab);
+    setError(null);
     if (keyword !== '') {
-      void runSearch(keyword, nextFilter, null, false);
+      void runSearch(nextTab, keyword, filter, null, false);
     }
   }
+
+  function selectFilter(nextFilter: SearchFilter) {
+    setFilter(nextFilter);
+    if (keyword !== '') {
+      void runSearch(tab, keyword, nextFilter, null, false);
+    }
+  }
+
+  const hasResults = tab === 'posts' ? posts.length > 0 : members.length > 0;
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 xl:flex-row">
@@ -97,41 +135,62 @@ export function SearchPage() {
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="이름 또는 아이디 검색"
+            placeholder="검색 키워드"
             aria-label="검색 키워드"
-            className="w-full rounded-xl border border-zinc-200 bg-zinc-50 py-3 pr-20 pl-11 text-sm outline-none focus:border-linkup focus:bg-white"
+            className="w-full rounded-xl border border-zinc-200 bg-zinc-50 py-3 pr-4 pl-11 text-sm outline-none focus:border-linkup focus:bg-white"
           />
-          <button
-            type="submit"
-            className="absolute top-1/2 right-2 -translate-y-1/2 rounded-lg bg-linkup px-3 py-1.5 text-xs font-semibold text-white"
-          >
-            검색
-          </button>
         </form>
 
-        <div className="mt-4 border-b border-zinc-100">
-          <span className="inline-block border-b-2 border-linkup px-1 py-3 text-sm font-semibold text-linkup">
+        <div className="mt-4 flex gap-6 border-b border-zinc-100">
+          <button
+            type="button"
+            onClick={() => selectTab('posts')}
+            className={
+              tab === 'posts'
+                ? 'border-b-2 border-zinc-900 py-3 text-sm font-semibold text-zinc-900'
+                : 'py-3 text-sm font-medium text-zinc-400'
+            }
+          >
+            게시글
+          </button>
+          <button
+            type="button"
+            onClick={() => selectTab('members')}
+            className={
+              tab === 'members'
+                ? 'border-b-2 border-zinc-900 py-3 text-sm font-semibold text-zinc-900'
+                : 'py-3 text-sm font-medium text-zinc-400'
+            }
+          >
             사용자
-          </span>
+          </button>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
           {keyword === '' && !loading && (
-            <p className="py-10 text-center text-sm text-zinc-400">
-              이름이나 회원 아이디를 검색해 주세요.
-            </p>
+            <p className="py-10 text-center text-sm text-zinc-400">검색어를 입력해 주세요.</p>
           )}
-          {loading && members.length === 0 && (
+          {loading && !hasResults && (
             <p className="py-10 text-center text-sm text-zinc-400">검색 중...</p>
           )}
-          {error && members.length === 0 && (
+          {error && !hasResults && (
             <p className="py-10 text-center text-sm text-red-500">{error}</p>
           )}
-          {!loading && !error && keyword !== '' && members.length === 0 && (
+          {!loading && !error && keyword !== '' && !hasResults && (
             <p className="py-10 text-center text-sm text-zinc-400">검색 결과가 없습니다.</p>
           )}
 
-          {members.length > 0 && (
+          {tab === 'posts' && posts.length > 0 && (
+            <ul>
+              {posts.map((post) => (
+                <li key={post.postId}>
+                  <PostCard post={post} />
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {tab === 'members' && members.length > 0 && (
             <ul className="divide-y divide-zinc-100">
               {members.map((member) => (
                 <li key={member.id}>
@@ -141,13 +200,17 @@ export function SearchPage() {
                       name: member.name,
                       uniqueId: member.uniqueId,
                       profileImage: member.profileImage,
+                      introduction: member.introduction,
                     }}
-                    className="flex items-center gap-3 px-2 py-4 hover:bg-zinc-50"
+                    className="flex items-start gap-3 px-2 py-4 hover:bg-zinc-50"
                   >
                     <MemberAvatar name={member.name} imageUrl={member.profileImage} />
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-zinc-900">{member.name}</p>
                       <p className="truncate text-xs text-zinc-400">@{member.uniqueId}</p>
+                      {member.introduction && (
+                        <p className="mt-1 truncate text-xs text-zinc-500">{member.introduction}</p>
+                      )}
                     </div>
                   </Link>
                 </li>
@@ -159,13 +222,13 @@ export function SearchPage() {
             <button
               type="button"
               disabled={loading}
-              onClick={() => void runSearch(keyword, filter, nextCursor, true)}
+              onClick={() => void runSearch(tab, keyword, filter, nextCursor, true)}
               className="mx-auto my-4 block rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 disabled:opacity-50"
             >
               {loading ? '불러오는 중...' : '더 보기'}
             </button>
           )}
-          {error && members.length > 0 && (
+          {error && hasResults && (
             <p className="py-3 text-center text-sm text-red-500">{error}</p>
           )}
         </div>
@@ -178,7 +241,7 @@ export function SearchPage() {
             <label key={item.value} className="flex cursor-pointer items-center gap-2 text-sm text-zinc-700">
               <input
                 type="radio"
-                name="member-filter"
+                name="search-filter"
                 value={item.value}
                 checked={filter === item.value}
                 disabled={item.value !== 'ALL' && memberId === null}

@@ -68,8 +68,15 @@ export async function fetchApiJson(
       formBody ??
       (options.body === undefined ? undefined : JSON.stringify(options.body)),
     credentials: 'include',
+    // 백엔드(Spring Security oauth2Login)는 인증 실패·미처리 예외 시 /login 으로 302 를 준다.
+    // 따라가면 다른 오리진이라 CORS 로 "Failed to fetch" 만 남으므로 리다이렉트를 막고 401 로 취급한다.
+    redirect: 'manual',
     signal: options.signal,
   });
+
+  if (response.type === 'opaqueredirect') {
+    throw new Error('인증이 만료되었거나 서버 처리 중 오류가 발생했습니다. (401)');
+  }
 
   if (!response.ok) {
     const body: unknown = await response.json().catch(() => null);
